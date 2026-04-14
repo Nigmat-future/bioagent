@@ -87,9 +87,11 @@ def build_research_graph() -> StateGraph:
         "experiment_design",
         "writing",
         "figure_generation",
-        "iteration",
     ]:
         graph.add_edge(node, "orchestrator")
+
+    # ── Iteration → code execution (retry loop) ────────────────
+    graph.add_edge("iteration", "code_execution")
 
     # ── Code execution → result validation ─────────────────────
     graph.add_edge("code_execution", "result_validation")

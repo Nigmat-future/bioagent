@@ -98,71 +98,110 @@ def gap_analysis_node(state: ResearchState) -> dict[str, Any]:
 
 
 def hypothesis_generation_node(state: ResearchState) -> dict[str, Any]:
-    """Generate research hypotheses from identified gaps."""
-    logger.info("[hypothesis_generation] Using placeholder")
-    return {
-        "hypotheses": [
-            {
-                "id": "h1",
-                "text": "A novel computational approach can identify key biomarkers "
-                        "associated with the research question",
-                "rationale": "Based on identified gaps in current literature",
-                "novelty": 7,
-                "testability": 8,
-            }
-        ],
-        "selected_hypothesis": {
-            "id": "h1",
-            "text": "A novel computational approach can identify key biomarkers "
-                    "associated with the research question",
-        },
-    }
+    """Generate research hypotheses from identified gaps using PlannerAgent."""
+    from bioagent.agents.planner import PlannerAgent
+
+    logger.info("[hypothesis_generation] Running PlannerAgent...")
+    agent = PlannerAgent()
+    return agent.run(state)
 
 
 def experiment_design_node(state: ResearchState) -> dict[str, Any]:
-    """Design computational experiments for the selected hypothesis."""
-    logger.info("[experiment_design] Using placeholder")
-    return {
-        "experiment_plan": {
-            "description": "Analyze public datasets to validate the hypothesis",
-            "data_sources": ["GEO", "TCGA"],
-            "methods": ["Differential expression analysis", "Pathway enrichment"],
-            "expected_outcomes": "Identification of statistically significant biomarkers",
-        },
-    }
+    """Design computational experiments for the selected hypothesis.
+
+    If a hypothesis is already selected, refine the experiment plan.
+    If not, delegate to the PlannerAgent for full planning.
+    """
+    from bioagent.agents.planner import PlannerAgent
+
+    selected = state.get("selected_hypothesis")
+    if not selected:
+        logger.info("[experiment_design] No hypothesis selected, running PlannerAgent...")
+        agent = PlannerAgent()
+        return agent.run(state)
+
+    # If hypothesis exists but plan is missing or placeholder, re-run planner
+    plan = state.get("experiment_plan")
+    if not plan or (isinstance(plan, dict) and "placeholder" in str(plan).lower()):
+        logger.info("[experiment_design] Refining experiment plan...")
+        agent = PlannerAgent()
+        return agent.run(state)
+
+    logger.info("[experiment_design] Plan already exists, passing through")
+    return {}
 
 
 def code_execution_node(state: ResearchState) -> dict[str, Any]:
-    """Execute analysis code and capture results."""
-    logger.info("[code_execution] Using placeholder")
-    return {
-        "code_artifacts": [
-            {"id": "c1", "filename": "analysis.py", "code": "# placeholder analysis code"}
-        ],
-        "execution_results": [
-            {"id": "r1", "stdout": "Analysis completed successfully (placeholder)", "stderr": "", "exit_code": 0}
-        ],
-        "analysis_results": [
-            {"description": "Placeholder analysis results", "significant_findings": 0}
-        ],
-    }
+    """Execute analysis code using AnalystAgent."""
+    from bioagent.agents.analyst import AnalystAgent
+
+    logger.info("[code_execution] Running AnalystAgent...")
+    agent = AnalystAgent()
+    return agent.run(state)
 
 
 def result_validation_node(state: ResearchState) -> dict[str, Any]:
-    """Validate whether execution results are satisfactory."""
-    logger.info("[result_validation] Auto-passing for Phase 1")
+    """Validate whether execution results are satisfactory.
+
+    Checks if analysis_results contain meaningful output.
+    If code failed (errors in execution_results), marks as failed.
+    """
+    results = state.get("analysis_results", [])
+    exec_results = state.get("execution_results", [])
+    errors = state.get("errors", [])
+
+    # Check if there are any actual results
+    if results:
+        last_result = results[-1] if isinstance(results, list) else results
+        if isinstance(last_result, dict):
+            summary = last_result.get("summary", "")
+            results_text = last_result.get("results", "")
+            if summary or results_text:
+                logger.info("[result_validation] Results validated successfully")
+                return {
+                    "validation_status": {
+                        "passed": True,
+                        "issues": [],
+                        "summary": "Analysis produced meaningful results",
+                    }
+                }
+
+    # Check if execution had errors
+    if exec_results:
+        last_exec = exec_results[-1] if isinstance(exec_results, list) else exec_results
+        if isinstance(last_exec, dict) and last_exec.get("exit_code", 0) != 0:
+            stderr = last_exec.get("stderr", "Unknown error")
+            logger.warning("[result_validation] Code execution failed: %s", stderr[:200])
+            return {
+                "validation_status": {
+                    "passed": False,
+                    "issues": [f"Code execution failed: {stderr[:500]}"],
+                },
+                "errors": [f"Analysis code failed: {stderr[:300]}"],
+            }
+
+    # No results and no errors — likely the analyst didn't produce output
+    logger.info("[result_validation] No results found, marking for retry")
     return {
-        "validation_status": {"passed": True, "issues": []},
+        "validation_status": {
+            "passed": False,
+            "issues": ["No analysis results produced"],
+        },
+        "errors": ["Analyst did not produce analyzable results"],
     }
 
 
 def iteration_node(state: ResearchState) -> dict[str, Any]:
-    """Handle retry/fix for failed analyses."""
+    """Handle retry/fix for failed analyses.
+
+    Sets phase to code_execution so the AnalystAgent re-runs with
+    the error context from the previous attempt.
+    """
     count = state.get("iteration_count", 0) + 1
-    logger.info("[iteration] Iteration #%d", count)
+    logger.info("[iteration] Iteration #%d — routing back to code_execution", count)
     return {
         "iteration_count": count,
-        "errors": [f"Entering iteration #{count}"],
+        "current_phase": "code_execution",
     }
 
 

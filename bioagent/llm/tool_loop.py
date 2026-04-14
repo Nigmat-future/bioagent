@@ -110,6 +110,8 @@ def run_tool_loop(
                 func = tool_functions.get(tool_name)
                 if func is None:
                     result = f"Error: unknown tool '{tool_name}'"
+                elif not tool_input:
+                    result = f"Error: {tool_name} requires parameters but none were provided. Check the tool schema."
                 else:
                     result = func(**tool_input) if isinstance(tool_input, dict) else func(tool_input)
                 # Ensure result is a string

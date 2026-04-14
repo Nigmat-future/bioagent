@@ -53,7 +53,6 @@ def execute_python(
             capture_output=True,
             timeout=timeout,
             cwd=str(settings.workspace_path),
-            text=True,
             encoding="utf-8",
             errors="replace",
             text=True,
