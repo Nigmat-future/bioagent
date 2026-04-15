@@ -79,9 +79,14 @@ def _make_cite_key(pmid: str, meta: dict[str, str]) -> str:
     if authors:
         # Take surname of first author (before comma or 'and')
         first = re.split(r",|\band\b", authors)[0].strip()
-        # Last word as surname
         words = first.split()
-        first_author = re.sub(r"[^A-Za-z]", "", words[-1]) if words else ""
+        # Surname is typically the first word in "Surname Initial(s)" format
+        # or the last word in "First Surname" format.
+        # Heuristic: if ≥2 words and last word is 1-2 chars (initial), use first word.
+        if len(words) >= 2 and len(words[-1]) <= 2:
+            first_author = re.sub(r"[^A-Za-z]", "", words[0])
+        else:
+            first_author = re.sub(r"[^A-Za-z]", "", words[-1]) if words else ""
     if first_author and year:
         return f"{first_author}{year}"
     return f"PMID{pmid}"

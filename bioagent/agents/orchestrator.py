@@ -113,7 +113,7 @@ class OrchestratorAgent(BaseAgent):
 
         return {
             "current_phase": next_phase,
-            "phase_history": [next_phase],
+            "phase_history": state.get("phase_history", []) + [next_phase],
         }
 
     def run(self, state: ResearchState) -> dict[str, Any]:
