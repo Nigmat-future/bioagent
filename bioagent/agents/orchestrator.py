@@ -127,7 +127,7 @@ class OrchestratorAgent(BaseAgent):
 
         response = self.client.messages.create(
             model=self.model,
-            max_tokens=256,
+            max_tokens=2048,  # needs room for thinking blocks + JSON text
             system=system_prompt,
             messages=messages,
         )

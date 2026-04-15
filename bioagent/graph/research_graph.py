@@ -169,11 +169,13 @@ def compile_research_graph():
         from bioagent.config.settings import settings
 
         if settings.use_sqlite_checkpoints:
+            import sqlite3
             from langgraph.checkpoint.sqlite import SqliteSaver
 
             checkpoint_path = settings.checkpoint_path / "research.db"
             checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-            checkpointer = SqliteSaver.from_conn_string(str(checkpoint_path))
+            conn = sqlite3.connect(str(checkpoint_path), check_same_thread=False)
+            checkpointer = SqliteSaver(conn)
             return graph.compile(checkpointer=checkpointer)
     except ImportError:
         logger.warning("sqlite checkpointer not available, using in-memory")
