@@ -18,7 +18,11 @@ def _make_httpx_client() -> "httpx.Client":
     """
     import httpx
 
-    return httpx.Client(proxy=None, verify=False, timeout=httpx.Timeout(300.0, connect=10.0))
+    return httpx.Client(
+        proxy=None,
+        verify=settings.tls_verify,
+        timeout=httpx.Timeout(300.0, connect=10.0),
+    )
 
 
 @lru_cache(maxsize=1)

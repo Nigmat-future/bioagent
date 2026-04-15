@@ -6,8 +6,20 @@ import logging
 from pathlib import Path
 
 
-def setup_logging(level: str = "INFO", log_file: str | None = None) -> None:
-    """Configure structured logging for the entire package."""
+def setup_logging(
+    level: str = "INFO",
+    log_file: str | None = None,
+) -> None:
+    """Configure logging for the entire package.
+
+    Parameters
+    ----------
+    level : str
+        Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+    log_file : str or None
+        Optional file path for log output. When provided, logs are written
+        to both console and file.
+    """
     handlers: list[logging.Handler] = [logging.StreamHandler()]
 
     if log_file:
@@ -17,6 +29,6 @@ def setup_logging(level: str = "INFO", log_file: str | None = None) -> None:
     logging.basicConfig(
         level=getattr(logging, level.upper(), logging.INFO),
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        datefmt="%H:%M:%S",
         handlers=handlers,
     )

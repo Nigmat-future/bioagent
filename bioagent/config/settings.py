@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     max_iterations: int = 5
     max_tool_calls: int = 20
 
+    # --- Token budget ---
+    token_budget: int = 500_000       # max total tokens (input + output)
+    cost_budget_usd: float = 10.0     # max estimated cost in USD
+
     # --- Checkpointing ---
     checkpoint_dir: str = "checkpoints"
     use_sqlite_checkpoints: bool = True
@@ -48,6 +52,10 @@ class Settings(BaseSettings):
     # --- Logging ---
     log_level: str = "INFO"
     log_file: str = "bioagent.log"
+
+    # --- Network ---
+    # Set to False only when using a local proxy that intercepts TLS (e.g. Clash).
+    tls_verify: bool = True
 
     model_config = SettingsConfigDict(
         env_file=str(PROJECT_ROOT / ".env"),

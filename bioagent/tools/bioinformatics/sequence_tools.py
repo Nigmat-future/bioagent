@@ -74,6 +74,8 @@ def gc_content_sliding_window(sequence, window_size=100):
 
 
 def register_tools() -> None:
+    if "get_sequence_analysis_template" in registry.list_tools():
+        return
     registry.register(
         name="get_sequence_analysis_template",
         description="Get Python code templates for sequence analysis (BLAST, alignment, GC content).",

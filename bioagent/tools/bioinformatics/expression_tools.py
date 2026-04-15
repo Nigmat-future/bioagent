@@ -100,6 +100,8 @@ def create_volcano_plot(de_results, title="Volcano Plot",
 
 
 def register_tools() -> None:
+    if "get_expression_analysis_template" in registry.list_tools():
+        return
     registry.register(
         name="get_expression_analysis_template",
         description="Get Python code templates for gene expression analysis (scRNA-seq, bulk RNA-seq, differential expression, volcano plots).",

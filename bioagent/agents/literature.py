@@ -225,5 +225,3 @@ class LiteratureAgent(BaseAgent):
                         papers.append({"id": pmid, "title": ""})
 
         return papers
-
-        return papers

@@ -31,80 +31,28 @@ class AnalystAgent(BaseAgent):
         return "You are a code analysis agent for bioinformatics."
 
     def get_tools(self) -> tuple[list[dict], dict[str, Any]]:
-        from bioagent.tools.execution.python_runner import execute_python
-        from bioagent.tools.execution.package_manager import install_package
-        from bioagent.tools.general.file_tools import read_file, write_file, list_files
+        from bioagent.tools.execution.register import register_execution_tools
+        from bioagent.tools.bioinformatics.sequence_tools import register_tools as reg_seq
+        from bioagent.tools.bioinformatics.expression_tools import register_tools as reg_expr
+        from bioagent.tools.bioinformatics.genomic_tools import register_tools as reg_genomic
         from bioagent.tools.registry import registry
 
-        # Register execution tools if not already
-        if "execute_python" not in registry.list_tools():
-            registry.register(
-                name="execute_python",
-                description="Execute Python code in a subprocess and return output. Code runs in the workspace directory with a timeout.",
-                input_schema={
-                    "type": "object",
-                    "properties": {
-                        "code": {"type": "string", "description": "Python code to execute"},
-                        "timeout": {"type": "integer", "description": "Timeout in seconds (default 120, max 300)", "default": 120},
-                    },
-                    "required": ["code"],
-                },
-                function=execute_python,
-            )
-        if "install_package" not in registry.list_tools():
-            registry.register(
-                name="install_package",
-                description="Install a Python package via pip if not already installed.",
-                input_schema={
-                    "type": "object",
-                    "properties": {
-                        "package_name": {"type": "string", "description": "Package name (e.g. 'scanpy', 'scikit-learn')"},
-                    },
-                    "required": ["package_name"],
-                },
-                function=install_package,
-            )
-        if "write_file" not in registry.list_tools():
-            registry.register(
-                name="write_file",
-                description="Write content to a file in the workspace.",
-                input_schema={
-                    "type": "object",
-                    "properties": {
-                        "path": {"type": "string", "description": "Path relative to workspace (e.g. 'figures/plot.py')"},
-                        "content": {"type": "string", "description": "File content"},
-                    },
-                    "required": ["path", "content"],
-                },
-                function=write_file,
-            )
-        if "read_file" not in registry.list_tools():
-            registry.register(
-                name="read_file",
-                description="Read a file from the workspace.",
-                input_schema={
-                    "type": "object",
-                    "properties": {
-                        "path": {"type": "string", "description": "Path relative to workspace"},
-                    },
-                    "required": ["path"],
-                },
-                function=read_file,
-            )
-        if "list_files" not in registry.list_tools():
-            registry.register(
-                name="list_files",
-                description="List files in a workspace directory.",
-                input_schema={
-                    "type": "object",
-                    "properties": {
-                        "directory": {"type": "string", "description": "Directory path relative to workspace (empty for root)", "default": ""},
-                    },
-                },
-                function=list_files,
-            )
+        # Register all tools (idempotent — each function checks before registering)
+        register_execution_tools()
+        reg_seq()
+        reg_expr()
+        reg_genomic()
 
-        tool_names = ["execute_python", "install_package", "write_file", "read_file", "list_files"]
+        tool_names = [
+            "execute_python",
+            "install_package",
+            "write_file",
+            "read_file",
+            "list_files",
+            "get_sequence_analysis_template",
+            "get_expression_analysis_template",
+            "get_genomic_analysis_template",
+        ]
         return registry.get_definitions(tool_names), registry.get_functions(tool_names)
 
     def build_messages(self, state: ResearchState) -> list[dict[str, Any]]:

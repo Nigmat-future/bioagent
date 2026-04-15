@@ -205,47 +205,181 @@ def iteration_node(state: ResearchState) -> dict[str, Any]:
     }
 
 
-def writing_node(state: ResearchState) -> dict[str, Any]:
-    """Draft paper sections."""
-    logger.info("[writing] Using placeholder")
+def human_approval_node(state: ResearchState) -> dict[str, Any]:
+    """Pause for human approval at key decision points.
+
+    Only active when settings.human_in_loop is True.
+    Automatically passes through otherwise.
+    """
+    from bioagent.config.settings import settings
+
+    if not settings.human_in_loop:
+        return {}
+
+    phase = state.get("current_phase", "unknown")
     question = state.get("research_question", "")
-    return {
-        "paper_sections": {
-            "abstract": {
-                "content": f"[Placeholder abstract for: {question}]",
-                "status": "draft",
-            },
-            "introduction": {
-                "content": "[Placeholder introduction]",
-                "status": "draft",
-            },
-            "methods": {
-                "content": "[Placeholder methods]",
-                "status": "draft",
-            },
-            "results": {
-                "content": "[Placeholder results]",
-                "status": "draft",
-            },
-        },
-    }
+
+    # Build context summary for the user
+    context_parts = [f"Current phase: {phase}"]
+    if state.get("selected_hypothesis"):
+        h = state["selected_hypothesis"]
+        h_text = h.get("text", "") if isinstance(h, dict) else str(h)
+        context_parts.append(f"Hypothesis: {h_text[:200]}")
+    if state.get("experiment_plan"):
+        plan = state["experiment_plan"]
+        plan_text = plan.get("content", str(plan))[:200] if isinstance(plan, dict) else str(plan)[:200]
+        context_parts.append(f"Plan: {plan_text}")
+
+    print(f"\n{'='*60}")
+    print(f"  Human Approval Required")
+    print(f"  Question: {question}")
+    print(f"\n  " + "\n  ".join(context_parts))
+    print(f"{'='*60}")
+
+    try:
+        feedback = input("\n  Approve? (y/n/edit): ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        feedback = "y"
+
+    if feedback in ("n", "no"):
+        return {
+            "human_feedback": "User rejected the current direction. Please reconsider.",
+            "errors": ["Human rejected at phase: " + phase],
+        }
+    elif feedback in ("edit", "e"):
+        try:
+            user_input = input("  Enter guidance: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            user_input = ""
+        return {"human_feedback": user_input or "User requested revision."}
+
+    return {"human_feedback": None}
+
+
+def writing_node(state: ResearchState) -> dict[str, Any]:
+    """Draft paper sections using WriterAgent."""
+    from bioagent.agents.writer import WriterAgent
+
+    logger.info("[writing] Running WriterAgent...")
+    agent = WriterAgent()
+    return agent.run(state)
 
 
 def figure_generation_node(state: ResearchState) -> dict[str, Any]:
-    """Generate publication-quality figures."""
-    logger.info("[figure_generation] Using placeholder")
-    return {
-        "figures": [
-            {"id": "f1", "type": "heatmap", "caption": "Placeholder figure", "path": ""}
-        ],
-    }
+    """Generate publication-quality figures using VisualizationAgent."""
+    from bioagent.agents.visualization import VisualizationAgent
+
+    logger.info("[figure_generation] Running VisualizationAgent...")
+    agent = VisualizationAgent()
+    return agent.run(state)
 
 
 def review_node(state: ResearchState) -> dict[str, Any]:
-    """Self-review of the complete output."""
-    logger.info("[review] Auto-approving for Phase 1")
+    """Self-review of the complete paper draft using LLM reviewer."""
+    from pathlib import Path
+
+    from bioagent.llm.clients import get_anthropic_client, get_anthropic_model
+    from bioagent.llm.token_tracking import global_token_usage
+
+    logger.info("[review] Running self-review...")
+
+    # Load review prompt
+    prompts_dir = Path(__file__).resolve().parent.parent / "prompts"
+    review_prompt = (prompts_dir / "review.md").read_text(encoding="utf-8")
+
+    # Assemble the full paper for review
+    sections = state.get("paper_sections", {})
+    paper_text = ""
+    for name, section in sections.items():
+        if isinstance(section, dict):
+            content = section.get("content", "")
+        else:
+            content = str(section)
+        paper_text += f"\n\n### {name.upper()}\n{content}\n"
+
+    figures = state.get("figures", [])
+    fig_summary = "\n".join(
+        f"- Figure {i+1}: {f.get('caption', f.get('type', 'figure'))} ({f.get('type', 'unknown')})"
+        for i, f in enumerate(figures)
+        if isinstance(f, dict)
+    ) if figures else "No figures generated."
+
+    hypothesis = state.get("selected_hypothesis", {})
+    h_text = hypothesis.get("text", "") if isinstance(hypothesis, dict) else str(hypothesis)
+
+    client = get_anthropic_client()
+    model = get_anthropic_model()
+
+    response = client.messages.create(
+        model=model,
+        max_tokens=4096,
+        system=review_prompt,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f"## Research Question\n{state.get('research_question', '')}\n\n"
+                    f"## Hypothesis\n{h_text}\n\n"
+                    f"## Paper Draft\n{paper_text[:8000]}\n\n"
+                    f"## Figures\n{fig_summary}\n\n"
+                    "Please review this paper draft thoroughly. "
+                    "Provide a score (1-10), strengths, weaknesses, and specific issues."
+                ),
+            }
+        ],
+    )
+
+    if response.usage:
+        global_token_usage.add(
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+        )
+
+    review_text = "\n".join(b.text for b in response.content if hasattr(b, "text"))
+
+    # Parse score from review
+    import re
+
+    score = 5  # default
+    score_match = re.search(r"###\s*SCORE\s*\n\s*(\d+)", review_text, re.IGNORECASE)
+    if not score_match:
+        score_match = re.search(r"(?:score|rating)[:\s]+(\d+)(?:\s*/\s*10)?", review_text, re.IGNORECASE)
+    if score_match:
+        score = int(score_match.group(1))
+        score = min(max(score, 1), 10)  # clamp to 1-10
+
+    # Parse recommendation
+    recommendation = "minor_revision"
+    rec_match = re.search(
+        r"###\s*RECOMMENDATION\s*\n\s*(accept|minor_revision|major_revision|reject)",
+        review_text, re.IGNORECASE,
+    )
+    if rec_match:
+        recommendation = rec_match.group(1).lower()
+
+    # Parse revision notes from SPECIFIC_ISSUES
+    revision_notes = []
+    issues_section = re.search(
+        r"###\s*SPECIFIC_ISSUES\s*\n(.*?)(?=\n###|\Z)",
+        review_text, re.DOTALL | re.IGNORECASE,
+    )
+    if issues_section:
+        for line in issues_section.group(1).strip().split("\n"):
+            line = line.strip().lstrip("- ")
+            if line:
+                revision_notes.append(line)
+
+    logger.info("[review] Score: %d/10, Recommendation: %s", score, recommendation)
+
     return {
         "review_feedback": [
-            {"reviewer": "auto", "score": 8, "comments": "Auto-approved placeholder"}
+            {
+                "reviewer": "self_review",
+                "score": score,
+                "recommendation": recommendation,
+                "comments": review_text,
+            }
         ],
+        "revision_notes": revision_notes,
+        "current_phase": "complete" if score >= 7 else "writing",
     }

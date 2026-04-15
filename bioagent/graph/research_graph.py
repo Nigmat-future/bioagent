@@ -22,12 +22,16 @@ def build_research_graph() -> StateGraph:
     returns to the orchestrator for re-routing. Special cases:
       - result_validation can route to iteration (retry) or orchestrator
       - review can route to END or back to orchestrator for revision
+      - When human_in_loop is enabled, a human_approval gate sits between
+        orchestrator and phase nodes at critical decision points.
     """
+    from bioagent.config.settings import settings
     from bioagent.graph.nodes import (
         code_execution_node,
         experiment_design_node,
         figure_generation_node,
         gap_analysis_node,
+        human_approval_node,
         hypothesis_generation_node,
         iteration_node,
         literature_review_node,
@@ -57,27 +61,65 @@ def build_research_graph() -> StateGraph:
     graph.add_node("figure_generation", figure_generation_node)
     graph.add_node("review", review_node)
 
+    # Human approval node (only active when human_in_loop is True)
+    if settings.human_in_loop:
+        graph.add_node("human_approval", human_approval_node)
+
     # ── Entry point ────────────────────────────────────────────
     graph.set_entry_point("orchestrator")
 
     # ── Orchestrator → phase nodes (conditional) ───────────────
-    graph.add_conditional_edges(
-        "orchestrator",
-        route_from_orchestrator,
-        {
-            "literature_review": "literature_review",
-            "gap_analysis": "gap_analysis",
-            "hypothesis_generation": "hypothesis_generation",
-            "experiment_design": "experiment_design",
-            "code_execution": "code_execution",
-            "result_validation": "result_validation",
-            "iteration": "iteration",
-            "writing": "writing",
-            "figure_generation": "figure_generation",
-            "review": "review",
-            "__end__": END,
-        },
-    )
+    # When human_in_loop: orchestrator routes to human_approval first,
+    # then human_approval routes to the actual phase node.
+    # Otherwise: orchestrator routes directly to phase nodes.
+    if settings.human_in_loop:
+        from bioagent.graph.routing import route_from_orchestrator_with_approval
+
+        graph.add_conditional_edges(
+            "orchestrator",
+            route_from_orchestrator_with_approval,
+            {
+                "human_approval": "human_approval",
+                "__end__": END,
+            },
+        )
+
+        # human_approval routes to the actual phase node
+        graph.add_conditional_edges(
+            "human_approval",
+            route_from_orchestrator,  # re-use the same phase mapping
+            {
+                "literature_review": "literature_review",
+                "gap_analysis": "gap_analysis",
+                "hypothesis_generation": "hypothesis_generation",
+                "experiment_design": "experiment_design",
+                "code_execution": "code_execution",
+                "result_validation": "result_validation",
+                "iteration": "iteration",
+                "writing": "writing",
+                "figure_generation": "figure_generation",
+                "review": "review",
+                "__end__": END,
+            },
+        )
+    else:
+        graph.add_conditional_edges(
+            "orchestrator",
+            route_from_orchestrator,
+            {
+                "literature_review": "literature_review",
+                "gap_analysis": "gap_analysis",
+                "hypothesis_generation": "hypothesis_generation",
+                "experiment_design": "experiment_design",
+                "code_execution": "code_execution",
+                "result_validation": "result_validation",
+                "iteration": "iteration",
+                "writing": "writing",
+                "figure_generation": "figure_generation",
+                "review": "review",
+                "__end__": END,
+            },
+        )
 
     # ── Phase nodes → orchestrator (standard flow) ─────────────
     for node in [

@@ -62,10 +62,16 @@ def create_manhattan_plot(gwas_results, title="Manhattan Plot",
     chromosomes = sorted(gwas_results["chromosome"].unique())
     colors = ["#1f77b4", "#ff7f0e"] * 11
 
+    # Precompute cumulative position offsets for each chromosome
+    chr_offsets = {}
+    cumulative = 0
+    for chrom in chromosomes:
+        chr_offsets[chrom] = cumulative
+        cumulative += gwas_results[gwas_results["chromosome"] == chrom]["position"].max()
+
     for i, chrom in enumerate(chromosomes):
         subset = gwas_results[gwas_results["chromosome"] == chrom]
-        offset = sum(max(gwas_results[gwas_results["chromosome"] == c]["position"].max()
-                        for c in chromosomes[:j]) for j in range(i))
+        offset = chr_offsets[chrom]
         ax.scatter(subset["position"] + offset, subset["-log10p"],
                    c=colors[i % len(colors)], s=3, alpha=0.6)
 
@@ -110,6 +116,8 @@ def gene_set_enrichment(gene_list, pathway_genes, all_genes):
 
 
 def register_tools() -> None:
+    if "get_genomic_analysis_template" in registry.list_tools():
+        return
     registry.register(
         name="get_genomic_analysis_template",
         description="Get Python code templates for genomic analysis (GWAS simulation, Manhattan plots, variant annotation, gene set analysis).",

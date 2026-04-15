@@ -11,6 +11,15 @@ from bioagent.tools.execution.sandbox import ensure_workspace
 logger = logging.getLogger(__name__)
 
 
+def _validate_path(path: str) -> Path:
+    """Resolve path and ensure it stays within the workspace (no traversal)."""
+    workspace = settings.workspace_path.resolve()
+    full = (workspace / path).resolve()
+    if not str(full).startswith(str(workspace)):
+        raise ValueError(f"Path traversal blocked: '{path}' resolves outside workspace")
+    return full
+
+
 def read_file(path: str) -> str:
     """Read a file from the workspace and return its contents.
 
@@ -19,7 +28,10 @@ def read_file(path: str) -> str:
     path : str
         Relative path within the workspace (e.g. ``"data/gene_counts.csv"``).
     """
-    full_path = settings.workspace_path / path
+    try:
+        full_path = _validate_path(path)
+    except ValueError as exc:
+        return f"Error: {exc}"
     if not full_path.exists():
         return f"Error: file not found: {path}"
     try:
@@ -38,7 +50,10 @@ def write_file(path: str, content: str) -> str:
     content : str
         Content to write.
     """
-    full_path = settings.workspace_path / path
+    try:
+        full_path = _validate_path(path)
+    except ValueError as exc:
+        return f"Error: {exc}"
     try:
         full_path.parent.mkdir(parents=True, exist_ok=True)
         full_path.write_text(content, encoding="utf-8")

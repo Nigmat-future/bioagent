@@ -29,6 +29,18 @@ def route_from_orchestrator(state: ResearchState) -> str:
     return node_map.get(phase, "__end__")
 
 
+def route_from_orchestrator_with_approval(state: ResearchState) -> str:
+    """Route to human_approval gate before the actual phase node.
+
+    Only routes to __end__ directly for 'complete' phase; all other phases
+    go through the human_approval gate first.
+    """
+    phase = state.get("current_phase", "literature_review")
+    if phase == "complete":
+        return "__end__"
+    return "human_approval"
+
+
 def route_after_validation(state: ResearchState) -> str:
     """After result_validation, decide whether to proceed or retry.
 
@@ -39,8 +51,9 @@ def route_after_validation(state: ResearchState) -> str:
         "iteration" if retryable (iteration_count < max),
         "hypothesis_generation" if exhausted retries (pivot).
     """
+    from bioagent.config.settings import settings
     validation = state.get("validation_status")
-    max_iters = 5  # TODO: read from settings
+    max_iters = settings.max_iterations
 
     if validation and validation.get("passed"):
         return "orchestrator"
