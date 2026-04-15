@@ -220,7 +220,7 @@ class LiteratureAgent(BaseAgent):
         # Strategy 2: Find all PMIDs mentioned with context (PMID: xxx or **xxx**)
         if not papers:
             # Match patterns like "PMID: 30820047", "PMID:30820047", "**30820047**"
-            pmid_pattern = r"(?:PMID:?\s*|\\*\*)(\d{6,})(?:\\**|[\s,\)\]])"
+            pmid_pattern = r"(?:PMID:?\s*|\*\*)(\d{6,})(?:\*\*|[\s,\)\]])"
             # Also match lines that reference a PMID with a title
             line_pattern = r"(?:PMID:?\s*)(\d{6,})[\s\-–—:]*([^\n]{10,})"
 
