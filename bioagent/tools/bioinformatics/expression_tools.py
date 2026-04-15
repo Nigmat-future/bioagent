@@ -95,6 +95,101 @@ def create_volcano_plot(de_results, title="Volcano Plot",
     print(f"Volcano plot saved. {sum(significant)} significant genes found.")
     return fig
 ''',
+        "pydeseq2": '''# DESeq2-style differential expression using PyDESeq2
+# More robust than t-tests; uses negative binomial model appropriate for count data
+import numpy as np
+import pandas as pd
+
+try:
+    from pydeseq2.dds import DeseqDataSet
+    from pydeseq2.ds import DeseqStats
+
+    # counts: genes x samples raw count matrix (DataFrame)
+    # metadata: DataFrame with 'condition' column (e.g. 'control'/'treatment')
+
+    # Simulate count data if real data not available
+    np.random.seed(42)
+    n_genes, n_samples = 500, 20
+    counts = pd.DataFrame(
+        np.random.negative_binomial(5, 0.5, size=(n_genes, n_samples)),
+        index=[f"gene_{i}" for i in range(n_genes)],
+        columns=[f"sample_{i}" for i in range(n_samples)],
+    )
+    metadata = pd.DataFrame(
+        {"condition": ["control"] * 10 + ["treatment"] * 10},
+        index=counts.columns,
+    )
+
+    dds = DeseqDataSet(counts=counts.T, metadata=metadata, design_factors="condition")
+    dds.deseq2()
+
+    stat_res = DeseqStats(dds, contrast=["condition", "treatment", "control"])
+    stat_res.summary()
+    results = stat_res.results_df
+
+    # Filter significant results
+    sig = results[(results["padj"] < 0.05) & (abs(results["log2FoldChange"]) > 1)]
+    print(f"DESeq2 analysis complete. Significant genes (padj<0.05, |log2FC|>1): {len(sig)}")
+    print(sig.sort_values("padj").head(20).to_string())
+    results.to_csv("workspace/output/deseq2_results.csv")
+
+except ImportError:
+    print("PyDESeq2 not installed. Install with: pip install pydeseq2")
+    print("Falling back to t-test with BH correction...")
+    # Fallback: scipy t-test with FDR correction (already in differential_expression template)
+''',
+        "survival_analysis": '''# Survival analysis — Kaplan-Meier + Cox proportional hazards
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+try:
+    from lifelines import KaplanMeierFitter, CoxPHFitter
+    from lifelines.statistics import logrank_test
+
+    # Simulate survival data (replace with real data)
+    np.random.seed(42)
+    n = 100
+    durations_A = np.random.exponential(scale=24, size=n // 2)  # months
+    durations_B = np.random.exponential(scale=14, size=n // 2)
+    events_A = (durations_A < 36).astype(int)
+    events_B = (durations_B < 36).astype(int)
+
+    # Kaplan-Meier
+    fig, ax = plt.subplots(figsize=(8, 5))
+    kmf_A = KaplanMeierFitter()
+    kmf_A.fit(durations_A, events_A, label="Group A (control)")
+    kmf_A.plot_survival_function(ax=ax, ci_show=True)
+
+    kmf_B = KaplanMeierFitter()
+    kmf_B.fit(durations_B, events_B, label="Group B (treatment)")
+    kmf_B.plot_survival_function(ax=ax, ci_show=True)
+
+    # Log-rank test
+    lr = logrank_test(durations_A, durations_B, events_A, events_B)
+    ax.set_title(f"Kaplan-Meier Survival Curves (log-rank p={lr.p_value:.3f})")
+    ax.set_xlabel("Time (months)")
+    ax.set_ylabel("Survival probability")
+    plt.tight_layout()
+    plt.savefig("workspace/figures/survival_km.pdf", bbox_inches="tight")
+    print(f"Log-rank test p-value: {lr.p_value:.4f}")
+    print(f"Median OS — Group A: {kmf_A.median_survival_time_:.1f} months")
+    print(f"Median OS — Group B: {kmf_B.median_survival_time_:.1f} months")
+
+    # Cox PH model
+    df = pd.DataFrame({
+        "duration": np.concatenate([durations_A, durations_B]),
+        "event": np.concatenate([events_A, events_B]),
+        "treatment": [0] * (n // 2) + [1] * (n // 2),
+    })
+    cph = CoxPHFitter()
+    cph.fit(df, duration_col="duration", event_col="event")
+    cph.print_summary()
+    print(f"Hazard ratio: {cph.hazard_ratios_['treatment']:.3f}")
+
+except ImportError:
+    print("Install lifelines: pip install lifelines")
+''',
     }
     return templates.get(analysis_type, f"# Template for '{analysis_type}' not found")
 
@@ -104,13 +199,20 @@ def register_tools() -> None:
         return
     registry.register(
         name="get_expression_analysis_template",
-        description="Get Python code templates for gene expression analysis (scRNA-seq, bulk RNA-seq, differential expression, volcano plots).",
+        description=(
+            "Get Python code templates for gene expression analysis. "
+            "Types: scanpy_basic, differential_expression, clustering, trajectory, "
+            "volcano_plot, heatmap, pydeseq2 (negative-binomial DE), survival_analysis."
+        ),
         input_schema={
             "type": "object",
             "properties": {
                 "analysis_type": {
                     "type": "string",
-                    "description": "Analysis type: scanpy_basic, differential_expression, clustering, trajectory, volcano_plot, heatmap",
+                    "description": (
+                        "Analysis type: scanpy_basic, differential_expression, clustering, "
+                        "trajectory, volcano_plot, heatmap, pydeseq2, survival_analysis"
+                    ),
                 },
             },
             "required": ["analysis_type"],

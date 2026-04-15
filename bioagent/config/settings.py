@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     # Set to False only when using a local proxy that intercepts TLS (e.g. Clash).
     tls_verify: bool = True
 
+    # --- Reproducibility ---
+    random_seed: int = 42
+
     model_config = SettingsConfigDict(
         env_file=str(PROJECT_ROOT / ".env"),
         env_prefix="BIOAGENT_",

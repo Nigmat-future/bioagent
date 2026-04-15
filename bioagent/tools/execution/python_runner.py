@@ -40,7 +40,22 @@ def execute_python(
     workspace.mkdir(parents=True, exist_ok=True)
 
     script_path = workspace / f"{uuid.uuid4().hex[:12]}.py"
-    script_path.write_text(code, encoding="utf-8")
+
+    # Prepend reproducibility seed so all executions are deterministic
+    seed = settings.random_seed
+    seed_header = (
+        f"import random as _random; _random.seed({seed})\n"
+        f"try:\n"
+        f"    import numpy as _np; _np.random.seed({seed})\n"
+        f"except ImportError:\n"
+        f"    pass\n"
+        f"try:\n"
+        f"    import torch as _torch; _torch.manual_seed({seed})\n"
+        f"except ImportError:\n"
+        f"    pass\n"
+        f"# --- user code below ---\n"
+    )
+    script_path.write_text(seed_header + code, encoding="utf-8")
 
     logger.info("Executing script: %s (timeout=%ds)", script_path, timeout)
 
