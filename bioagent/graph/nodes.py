@@ -371,6 +371,12 @@ def review_node(state: ResearchState) -> dict[str, Any]:
 
     logger.info("[review] Score: %d/10, Recommendation: %s", score, recommendation)
 
+    next_phase = "complete" if score >= 7 else "writing"
+
+    # Auto-export the manuscript when the review passes (score >= 7)
+    if score >= 7:
+        _auto_export(state)
+
     return {
         "review_feedback": [
             {
@@ -381,5 +387,20 @@ def review_node(state: ResearchState) -> dict[str, Any]:
             }
         ],
         "revision_notes": revision_notes,
-        "current_phase": "complete" if score >= 7 else "writing",
+        "current_phase": next_phase,
     }
+
+
+def _auto_export(state: ResearchState) -> None:
+    """Export the finalized manuscript to the workspace output directory."""
+    try:
+        from bioagent.config.settings import settings
+        from bioagent.export.markdown_export import export_markdown
+        from bioagent.export.latex_export import export_latex
+
+        out_dir = settings.workspace_path / "output"
+        export_markdown(state, out_dir)
+        export_latex(state, out_dir, generate_bib=True)
+        logger.info("[review] Manuscript auto-exported to %s", out_dir)
+    except Exception as exc:
+        logger.warning("[review] Auto-export failed (non-fatal): %s", exc)

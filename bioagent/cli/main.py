@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from pathlib import Path
 from typing import Optional
 
 import typer
@@ -327,6 +328,123 @@ def status(
         display_error(f"Failed to read session status: {exc}")
         logger.exception("Status check error")
         raise typer.Exit(1) from exc
+
+
+@app.command()
+def export(
+    thread_id: str = typer.Option(..., "--thread", "-t", help="Thread ID to export"),
+    format: str = typer.Option("both", "--format", "-f", help="Output format: md, latex, or both"),
+    output_dir: Optional[str] = typer.Option(None, "--output-dir", "-o", help="Output directory"),
+) -> None:
+    """Export a completed research session as a manuscript (Markdown and/or LaTeX)."""
+    from bioagent.utils.logging_config import setup_logging
+
+    setup_logging()
+
+    from bioagent.config.settings import settings
+
+    out = Path(output_dir) if output_dir else settings.workspace_path / "output"
+
+    # Load state from checkpoint
+    state = _load_state_from_checkpoint(thread_id)
+    if not state:
+        display_error(f"No state found for thread: {thread_id}")
+        raise typer.Exit(1)
+
+    topic = state.get("research_topic", "research")
+    console.print(f"\n[bold green]Exporting research: {topic}[/bold green]")
+    console.print(f"[dim]Output directory: {out}[/dim]\n")
+
+    from bioagent.export.markdown_export import export_markdown
+    from bioagent.export.latex_export import export_latex
+
+    if format in ("md", "both"):
+        try:
+            md_path = export_markdown(state, out)
+            console.print(f"[green]✓[/green] Markdown: {md_path}")
+        except Exception as exc:
+            display_error(f"Markdown export failed: {exc}")
+
+    if format in ("latex", "both"):
+        try:
+            tex_path, bib_path = export_latex(state, out)
+            console.print(f"[green]✓[/green] LaTeX: {tex_path}")
+            if bib_path:
+                console.print(f"[green]✓[/green] BibTeX: {bib_path}")
+        except Exception as exc:
+            display_error(f"LaTeX export failed: {exc}")
+
+
+def _load_state_from_checkpoint(thread_id: str) -> dict:
+    """Load the most recent state for a thread from the SQLite checkpoint."""
+    import json
+    import sqlite3
+
+    from bioagent.config.settings import settings
+
+    db_path = settings.checkpoint_path / "research.db"
+    if not db_path.exists():
+        return {}
+
+    try:
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        # Try blobs table first (LangGraph >=0.2 stores state as msgpack blobs)
+        try:
+            cur.execute(
+                "SELECT value FROM checkpoint_blobs WHERE thread_id = ? ORDER BY checkpoint_id DESC",
+                (thread_id,),
+            )
+            rows = cur.fetchall()
+            if rows:
+                import pickle
+
+                state_blob = rows[0]["value"]
+                if isinstance(state_blob, bytes):
+                    try:
+                        return pickle.loads(state_blob)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+        # Fallback: try the channel writes
+        cur.execute(
+            "SELECT channel, value FROM checkpoint_writes WHERE thread_id = ? ORDER BY checkpoint_id DESC",
+            (thread_id,),
+        )
+        channels = {}
+        for row in cur.fetchall():
+            ch = row["channel"]
+            val = row["value"]
+            if ch not in channels:
+                channels[ch] = val
+        conn.close()
+
+        # Deserialize channel values
+        state: dict = {}
+        for ch, val in channels.items():
+            if isinstance(val, bytes):
+                try:
+                    import pickle
+
+                    state[ch] = pickle.loads(val)
+                except Exception:
+                    try:
+                        state[ch] = json.loads(val.decode())
+                    except Exception:
+                        pass
+            elif isinstance(val, str):
+                try:
+                    state[ch] = json.loads(val)
+                except Exception:
+                    state[ch] = val
+        return state
+    except Exception as exc:
+        logger.warning("Could not load checkpoint state: %s", exc)
+        return {}
 
 
 if __name__ == "__main__":

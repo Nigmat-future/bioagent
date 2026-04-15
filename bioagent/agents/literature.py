@@ -132,6 +132,21 @@ class LiteratureAgent(BaseAgent):
         }
         if key_papers:
             updates["papers"] = key_papers
+            # Populate references field with structured citation data for export
+            references = [
+                {
+                    "id": p.get("id", ""),
+                    "title": p.get("title", ""),
+                    "authors": p.get("authors", ""),
+                    "journal": p.get("journal", ""),
+                    "year": p.get("year", ""),
+                    "relevance": p.get("relevance", ""),
+                }
+                for p in key_papers
+                if p.get("id")
+            ]
+            if references:
+                updates["references"] = references
 
         return updates
 
