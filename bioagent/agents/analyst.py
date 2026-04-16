@@ -64,6 +64,8 @@ class AnalystAgent(BaseAgent):
         iteration = state.get("iteration_count", 0)
         errors = state.get("errors", [])
         prev_results = state.get("execution_results", [])
+        data_artifacts = state.get("data_artifacts", [])
+        data_status = state.get("data_status", {})
 
         h_text = hypothesis.get("text", "No hypothesis selected") if isinstance(hypothesis, dict) else str(hypothesis)
         plan_text = plan.get("content", str(plan)) if isinstance(plan, dict) else str(plan)
@@ -73,6 +75,39 @@ class AnalystAgent(BaseAgent):
             f"## Hypothesis to Test\n{h_text}\n\n",
             f"## Experiment Plan\n{plan_text[:3000]}\n\n",
         ]
+
+        # Provide available data context
+        if data_artifacts:
+            artifact_lines = "\n".join(
+                f"- {a.get('path', '?')} — {a.get('description', '')} {a.get('size', '')}"
+                for a in data_artifacts
+                if isinstance(a, dict)
+            )
+            parts.append(
+                f"## Available Data Files (downloaded by data acquisition stage)\n"
+                f"{artifact_lines}\n\n"
+                "Load these files in your analysis code. Do NOT generate synthetic data.\n\n"
+            )
+        elif data_status:
+            status = data_status.get("status", "") if isinstance(data_status, dict) else ""
+            if status == "manual_required":
+                manual = data_status.get("manual_instructions", "") if isinstance(data_status, dict) else ""
+                parts.append(
+                    f"## Data Status: Manual Download Required\n"
+                    f"{manual[:500]}\n\n"
+                    "Call list_files('data') to check if any data has been manually placed. "
+                    "If data is present, use it. If not, report the missing data clearly.\n\n"
+                )
+            else:
+                parts.append(
+                    "## Data Files\nCall list_files('data') to discover available datasets "
+                    "before writing analysis code.\n\n"
+                )
+        else:
+            parts.append(
+                "## Data Files\nCall list_files('data') to discover available datasets "
+                "before writing analysis code.\n\n"
+            )
 
         if iteration > 0:
             parts.append(f"## Iteration #{iteration}\n")
@@ -91,7 +126,8 @@ class AnalystAgent(BaseAgent):
         parts.append(
             "## Your Task\n"
             "Write and execute Python code to perform the analysis described in the experiment plan.\n"
-            "- If real data is unavailable, generate realistic synthetic data\n"
+            "- Load data from workspace/data/ (downloaded by data acquisition stage)\n"
+            "- NEVER generate synthetic or simulated data\n"
             "- Save all figures to workspace/figures/\n"
             "- Print key results so they are captured in stdout\n"
             "- Use print() for all output\n\n"

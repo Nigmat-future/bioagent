@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     code_timeout: int = 120
     max_iterations: int = 5
     max_tool_calls: int = 20
+    max_review_rounds: int = 3
 
     # --- Token budget ---
     token_budget: int = 500_000       # max total tokens (input + output)
@@ -56,6 +57,11 @@ class Settings(BaseSettings):
     # --- Network ---
     # Set to False only when using a local proxy that intercepts TLS (e.g. Clash).
     tls_verify: bool = True
+
+    # --- Data acquisition ---
+    max_download_size_mb: int = 500
+    download_timeout: int = 300
+    entrez_email: str = "bioagent@example.com"
 
     # --- Reproducibility ---
     random_seed: int = 42

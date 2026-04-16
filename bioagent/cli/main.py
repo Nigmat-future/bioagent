@@ -145,6 +145,7 @@ def research(
         "hypotheses": [],
         "selected_hypothesis": None,
         "experiment_plan": None,
+        "data_status": None,
         "code_artifacts": [],
         "execution_results": [],
         "data_artifacts": [],
@@ -156,6 +157,7 @@ def research(
         "figures": [],
         "review_feedback": [],
         "revision_notes": [],
+        "review_count": 0,
         "messages": [],
         "errors": [],
         "human_feedback": None,
@@ -163,7 +165,7 @@ def research(
     }
 
     tid = thread_id or str(uuid.uuid4())
-    config = {"configurable": {"thread_id": tid}}
+    config = {"configurable": {"thread_id": tid}, "recursion_limit": 100}
 
     console.print(f"\n[bold green]BioAgent Research Session[/bold green]")
     console.print(f"[dim]Thread: {tid}[/dim]")
@@ -224,7 +226,7 @@ def resume(
         display_error(f"Failed to compile graph: {exc}")
         raise typer.Exit(1) from exc
 
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 100}
 
     console.print(f"\n[bold green]Resuming Research Session[/bold green]")
     console.print(f"[dim]Thread: {thread_id}[/dim]")

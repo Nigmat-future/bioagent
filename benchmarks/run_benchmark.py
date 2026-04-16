@@ -36,7 +36,7 @@ def run_case(case_name: str, output_dir: Path) -> dict:
 
     graph = compile_research_graph()
     tid = str(uuid.uuid4())
-    config = {"configurable": {"thread_id": tid}}
+    config = {"configurable": {"thread_id": tid}, "recursion_limit": 100}
 
     initial_state = {
         "research_topic": case.research_topic,
@@ -52,6 +52,7 @@ def run_case(case_name: str, output_dir: Path) -> dict:
         "hypotheses": [],
         "selected_hypothesis": None,
         "experiment_plan": None,
+        "data_status": None,
         "code_artifacts": [],
         "execution_results": [],
         "data_artifacts": [],
@@ -63,6 +64,7 @@ def run_case(case_name: str, output_dir: Path) -> dict:
         "figures": [],
         "review_feedback": [],
         "revision_notes": [],
+        "review_count": 0,
         "messages": [],
         "errors": [],
         "human_feedback": None,

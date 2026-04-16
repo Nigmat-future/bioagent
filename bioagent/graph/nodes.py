@@ -256,6 +256,15 @@ def human_approval_node(state: ResearchState) -> dict[str, Any]:
     return {"human_feedback": None}
 
 
+def data_acquisition_node(state: ResearchState) -> dict[str, Any]:
+    """Download real datasets using DataAcquisitionAgent."""
+    from bioagent.agents.data_acquisition import DataAcquisitionAgent
+
+    logger.info("[data_acquisition] Running DataAcquisitionAgent...")
+    agent = DataAcquisitionAgent()
+    return agent.run(state)
+
+
 def writing_node(state: ResearchState) -> dict[str, Any]:
     """Draft paper sections using WriterAgent."""
     from bioagent.agents.writer import WriterAgent
@@ -320,7 +329,7 @@ def review_node(state: ResearchState) -> dict[str, Any]:
                 "content": (
                     f"## Research Question\n{state.get('research_question', '')}\n\n"
                     f"## Hypothesis\n{h_text}\n\n"
-                    f"## Paper Draft\n{paper_text[:8000]}\n\n"
+                    f"## Paper Draft\n{paper_text[:30000]}\n\n"
                     f"## Figures\n{fig_summary}\n\n"
                     "Please review this paper draft thoroughly. "
                     "Provide a score (1-10), strengths, weaknesses, and specific issues."
@@ -373,9 +382,12 @@ def review_node(state: ResearchState) -> dict[str, Any]:
 
     next_phase = "complete" if score >= 7 else "writing"
 
-    # Auto-export the manuscript when the review passes (score >= 7)
-    if score >= 7:
-        _auto_export(state)
+    # Always export — the paper content is valid regardless of score.
+    # On a forced exit (plateau / max rounds), the router will end the graph
+    # after this node returns, so this is the last chance to write output.
+    _auto_export(state)
+
+    new_review_count = state.get("review_count", 0) + 1
 
     return {
         "review_feedback": [
@@ -388,6 +400,7 @@ def review_node(state: ResearchState) -> dict[str, Any]:
         ],
         "revision_notes": revision_notes,
         "current_phase": next_phase,
+        "review_count": new_review_count,
     }
 
 

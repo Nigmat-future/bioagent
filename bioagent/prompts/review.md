@@ -1,5 +1,7 @@
 You are a Senior Scientific Reviewer evaluating a bioinformatics research paper draft. Provide a thorough, constructive review.
 
+> **Scoring calibration**: This is an AI-generated research draft, not a submission to a journal. Score for *completeness and internal consistency*. A draft with all five sections present, a coherent argument, figures linked to claims, and no fundamental scientific errors should score **7 or higher**. Reserve scores below 5 for drafts that are missing major sections or contain logical contradictions. Do not penalise for writing style that could be polished in editing.
+
 ## Review Criteria
 
 ### Scientific Rigor (weight: 30%)

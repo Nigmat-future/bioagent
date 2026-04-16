@@ -28,6 +28,7 @@ def build_research_graph() -> StateGraph:
     from bioagent.config.settings import settings
     from bioagent.graph.nodes import (
         code_execution_node,
+        data_acquisition_node,
         experiment_design_node,
         figure_generation_node,
         gap_analysis_node,
@@ -54,6 +55,7 @@ def build_research_graph() -> StateGraph:
     graph.add_node("gap_analysis", gap_analysis_node)
     graph.add_node("hypothesis_generation", hypothesis_generation_node)
     graph.add_node("experiment_design", experiment_design_node)
+    graph.add_node("data_acquisition", data_acquisition_node)
     graph.add_node("code_execution", code_execution_node)
     graph.add_node("result_validation", result_validation_node)
     graph.add_node("iteration", iteration_node)
@@ -93,6 +95,7 @@ def build_research_graph() -> StateGraph:
                 "gap_analysis": "gap_analysis",
                 "hypothesis_generation": "hypothesis_generation",
                 "experiment_design": "experiment_design",
+                "data_acquisition": "data_acquisition",
                 "code_execution": "code_execution",
                 "result_validation": "result_validation",
                 "iteration": "iteration",
@@ -111,6 +114,7 @@ def build_research_graph() -> StateGraph:
                 "gap_analysis": "gap_analysis",
                 "hypothesis_generation": "hypothesis_generation",
                 "experiment_design": "experiment_design",
+                "data_acquisition": "data_acquisition",
                 "code_execution": "code_execution",
                 "result_validation": "result_validation",
                 "iteration": "iteration",
@@ -127,6 +131,7 @@ def build_research_graph() -> StateGraph:
         "gap_analysis",
         "hypothesis_generation",
         "experiment_design",
+        "data_acquisition",
         "writing",
         "figure_generation",
     ]:

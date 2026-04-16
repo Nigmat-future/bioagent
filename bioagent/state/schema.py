@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import operator
 from typing import Annotated, Literal, Optional, TypedDict
 
 from langgraph.graph.message import add_messages
@@ -15,6 +16,7 @@ PhaseName = Literal[
     "gap_analysis",
     "hypothesis_generation",
     "experiment_design",
+    "data_acquisition",
     "code_execution",
     "result_validation",
     "iteration",
@@ -53,7 +55,10 @@ class ResearchState(TypedDict, total=False):
     selected_hypothesis: Optional[dict]
     experiment_plan: Optional[dict]
 
-    # ── Code & execution ───────────────────────────────────
+    # ── Data acquisition ──────────────────────────────────────
+    data_status: Optional[dict]
+
+    #── Code & execution ───────────────────────────────────
     code_artifacts: Annotated[list[dict], dedup_add]
     execution_results: Annotated[list[dict], dedup_add]
     data_artifacts: Annotated[list[dict], dedup_add]
@@ -71,8 +76,9 @@ class ResearchState(TypedDict, total=False):
     figures: Annotated[list[dict], dedup_add]
 
     # ── Review ─────────────────────────────────────────────
-    review_feedback: Annotated[list[dict], dedup_add]
+    review_feedback: Annotated[list[dict], operator.add]
     revision_notes: Annotated[list[str], dedup_add]
+    review_count: int
 
     # ── LLM conversation (for within-agent tool loops) ─────
     messages: Annotated[list[dict], add_messages]

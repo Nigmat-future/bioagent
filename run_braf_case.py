@@ -61,6 +61,7 @@ def main():
         "hypotheses": [],
         "selected_hypothesis": None,
         "experiment_plan": None,
+        "data_status": None,
         "code_artifacts": [],
         "execution_results": [],
         "data_artifacts": [],
@@ -72,13 +73,14 @@ def main():
         "figures": [],
         "review_feedback": [],
         "revision_notes": [],
+        "review_count": 0,
         "messages": [],
         "errors": [],
         "human_feedback": None,
         "should_stop": False,
     }
 
-    config = {"configurable": {"thread_id": THREAD_ID}}
+    config = {"configurable": {"thread_id": THREAD_ID}, "recursion_limit": 100}
     run_start = time.time()
     phase_timings: dict[str, float] = {}
     phase_start = run_start

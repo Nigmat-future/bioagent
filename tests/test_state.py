@@ -75,7 +75,8 @@ class TestPhaseName:
         valid = typing.get_args(PhaseName)
         expected = {
             "literature_review", "gap_analysis", "hypothesis_generation",
-            "experiment_design", "code_execution", "result_validation",
-            "iteration", "writing", "figure_generation", "review", "complete",
+            "experiment_design", "data_acquisition", "code_execution",
+            "result_validation", "iteration", "writing", "figure_generation",
+            "review", "complete",
         }
         assert set(valid) == expected

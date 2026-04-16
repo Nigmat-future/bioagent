@@ -37,6 +37,7 @@ initial_state = {
     "hypotheses": [],
     "selected_hypothesis": None,
     "experiment_plan": None,
+    "data_status": None,
     "code_artifacts": [],
     "execution_results": [],
     "data_artifacts": [],
@@ -48,6 +49,7 @@ initial_state = {
     "figures": [],
     "review_feedback": [],
     "revision_notes": [],
+    "review_count": 0,
     "messages": [],
     "errors": [],
     "human_feedback": None,
@@ -55,7 +57,7 @@ initial_state = {
 }
 
 thread_id = str(uuid.uuid4())
-config = {"configurable": {"thread_id": thread_id}}
+config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 100}
 
 print(f"Starting BioAgent research (thread: {thread_id})")
 print(f"Question: {initial_state['research_question']}\n")

@@ -17,6 +17,7 @@ VALID_PHASES = [
     "gap_analysis",
     "hypothesis_generation",
     "experiment_design",
+    "data_acquisition",
     "code_execution",
     "result_validation",
     "iteration",

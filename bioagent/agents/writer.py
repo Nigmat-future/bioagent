@@ -44,6 +44,8 @@ class WriterAgent(BaseAgent):
         papers = state.get("papers", [])
         figures = state.get("figures", [])
         existing_sections = state.get("paper_sections", {})
+        revision_notes = state.get("revision_notes", [])
+        review_feedback = state.get("review_feedback", [])
 
         h_text = hypothesis.get("text", "") if isinstance(hypothesis, dict) else str(hypothesis)
         plan_text = plan.get("content", str(plan)) if isinstance(plan, dict) else str(plan)
@@ -84,8 +86,21 @@ class WriterAgent(BaseAgent):
         if gaps:
             context_parts.append(f"## Research Gaps Addressed\n" + "\n".join(gaps[:5]) + "\n\n")
 
-        # Check what sections already exist
-        if existing_sections:
+        # Revision mode: reviewer has already scored the paper and left specific issues
+        is_revision = bool(revision_notes) and bool(existing_sections)
+        if is_revision:
+            latest_review = review_feedback[-1] if review_feedback else {}
+            score = latest_review.get("score", "?") if isinstance(latest_review, dict) else "?"
+            notes_text = "\n".join(f"- {note}" for note in revision_notes)
+            context_parts.append(
+                f"## Reviewer Score: {score}/10 — Revision Required\n\n"
+                f"## Required Revisions\n{notes_text}\n\n"
+                "## Your Task\n"
+                "REVISE the existing paper sections to address ALL the reviewer issues listed above. "
+                "Rewrite every section that needs improvement. "
+                "Output each section using the same ### SECTION_NAME format."
+            )
+        elif existing_sections:
             existing_names = ", ".join(existing_sections.keys())
             context_parts.append(
                 f"## Already Written Sections: {existing_names}\n"
@@ -105,29 +120,41 @@ class WriterAgent(BaseAgent):
         conversation: list[dict[str, Any]],
         state: ResearchState,
     ) -> dict[str, Any]:
-        """Parse paper sections from the writer's output."""
-        sections = {}
+        """Parse paper sections from the writer's output.
+
+        Merges new/revised sections into existing ones so that sections the
+        writer did not touch are preserved (paper_sections has no list reducer
+        — returning a partial dict would replace and lose the rest).
+        """
+        import re
+
+        existing_sections = state.get("paper_sections", {})
+        # Start from a copy of existing sections; only overwrite what the writer produced
+        sections = dict(existing_sections)
         headers = ["ABSTRACT", "INTRODUCTION", "METHODS", "RESULTS", "DISCUSSION"]
+        found_any = False
 
         for header in headers:
-            import re
             pattern = rf"###\s*{header}\s*\n(.*?)(?=\n###\s|\Z)"
             match = re.search(pattern, result_text, re.DOTALL | re.IGNORECASE)
             if match:
                 content = match.group(1).strip()
                 if len(content) > 50:  # Skip trivial sections
+                    old_version = existing_sections.get(header.lower(), {}).get("version", 0)
                     sections[header.lower()] = {
                         "content": content,
                         "status": "draft",
-                        "version": 1,
+                        "version": old_version + 1,
                     }
+                    found_any = True
 
-        if not sections:
+        if not found_any:
             # Fallback: treat entire output as results section
+            old_version = existing_sections.get("results", {}).get("version", 0)
             sections["results"] = {
                 "content": result_text[:5000],
                 "status": "draft",
-                "version": 1,
+                "version": old_version + 1,
             }
 
         return {"paper_sections": sections}
