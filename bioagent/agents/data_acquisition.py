@@ -185,7 +185,20 @@ class DataAcquisitionAgent(BaseAgent):
 
     @staticmethod
     def _extract_section(text: str, header: str) -> str:
+        """Extract a named `### HEADER` section up to the next `###` or end.
+
+        Uses a strict single-newline separator after the header so empty
+        sections (header immediately followed by another header) correctly
+        extract as the empty string rather than swallowing subsequent
+        section bodies.
+        """
         import re
-        pattern = rf"###\s*{header}\s*\n(.*?)(?=\n###\s|\Z)"
-        match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+
+        # Match the header on its own line. Use [ \t]* (horizontal whitespace
+        # only) to avoid accidentally consuming the line-terminating newline
+        # — `\s*` would be greedy over `\n` and skip past empty section
+        # bodies, which produced incorrect extraction when a section had no
+        # content (e.g. all downloads failed).
+        pattern = rf"^###[ \t]*{header}[ \t]*\n(.*?)(?=^###[ \t]|\Z)"
+        match = re.search(pattern, text, re.DOTALL | re.IGNORECASE | re.MULTILINE)
         return match.group(1).strip() if match else ""
