@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import matplotlib
 import matplotlib.pyplot as plt
-from pathlib import Path
 
 # Standard figure sizes in mm
 SINGLE_COLUMN_MM = 89

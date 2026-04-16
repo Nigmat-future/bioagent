@@ -34,9 +34,7 @@
   End-to-End Bioinformatics Research}
 
 \author{
-  Author One\textsuperscript{1,*} \and
-  Author Two\textsuperscript{1} \and
-  Author Three\textsuperscript{2}
+  Nigmat Rahim\textsuperscript{1,*}
 }
 
 \date{} % leave blank; journal adds the date
@@ -46,10 +44,9 @@
 \maketitle
 
 \noindent
-\textsuperscript{1}Institute of Computational Biology, University Name, City, Country\\
-\textsuperscript{2}Department of Bioinformatics, Another University, City, Country\\
+\textsuperscript{1}School of Life Sciences, Peking University, Beijing 100871, China\\
 \textsuperscript{*}To whom correspondence should be addressed.
-E-mail: \texttt{author@institution.edu}
+E-mail: \texttt{nigmatrahim@stu.pku.edu.cn}
 
 %% ── Abstract ─────────────────────────────────────────────────────────────────
 \begin{abstract}
@@ -83,8 +80,10 @@ to-draft pipeline while maintaining scientific rigour.
 
 \textbf{Availability:}
 BioAgent is open-source (MIT) at
-\url{https://github.com/[PLACEHOLDER]/bioagent}.
-Requires Python~$\geq$3.11 and an Anthropic API key.
+\url{https://github.com/nigmatrahim/bioagent}.
+A Docker image, pinned dependency lock file, and one-command reproduction
+script (\texttt{scripts/reproduce\_benchmark.sh}) are provided.
+Requires Python~$\geq$3.11 and an Anthropic-compatible LLM endpoint.
 \end{abstract}
 
 \noindent
@@ -332,10 +331,34 @@ The authors thank the BioMCP development team for the unified biomedical
 API that underpins BioAgent's literature retrieval capabilities.
 
 \section*{Funding}
-[PLACEHOLDER — add funding sources]
+No specific funding was received for this work.
 
 \section*{Conflict of Interest}
 None declared.
+
+\section*{Author Contributions}
+N.R.\ conceived the project, designed and implemented the system,
+ran the benchmark experiments, and wrote the manuscript.
+
+\section*{Data Availability}
+All benchmark datasets used in this study are publicly available.
+TCGA Skin Cutaneous Melanoma (SKCM) data were obtained via the cBioPortal
+study identifier \texttt{skcm\_tcga}.
+Gene Expression Omnibus (GEO) series GSE65904 and GSE50509 are available at
+\url{https://www.ncbi.nlm.nih.gov/geo/}.
+Full dataset provenance, including exact accessions and download commands,
+is documented in \texttt{benchmarks/data/README.md} of the code repository.
+No controlled-access data were used.
+
+\section*{Code Availability}
+All source code, evaluation scripts, prompt templates and reproduction
+instructions are released under the MIT licence at
+\url{https://github.com/nigmatrahim/bioagent}.
+A pinned dependency lock file
+(\texttt{requirements-lock.txt}), a Dockerfile, and a cross-platform
+reproduction script (\texttt{scripts/reproduce\_benchmark.sh},
+\texttt{.ps1}) enable byte-level hash verification of the case-study
+outputs.
 
 %% ─────────────────────────────────────────────────────────────────────────────
 \bibliographystyle{natbib}

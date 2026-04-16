@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Annotated
 
 
 def _content_hash(item: dict) -> str:

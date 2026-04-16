@@ -6,7 +6,6 @@ import logging
 from pathlib import Path
 
 from bioagent.config.settings import settings
-from bioagent.tools.execution.sandbox import ensure_workspace
 
 logger = logging.getLogger(__name__)
 

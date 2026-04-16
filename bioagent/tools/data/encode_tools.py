@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
-import urllib.request
 import urllib.parse
+import urllib.request
 
 logger = logging.getLogger(__name__)
 

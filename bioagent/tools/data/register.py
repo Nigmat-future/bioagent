@@ -5,24 +5,23 @@ from __future__ import annotations
 
 def register_data_tools() -> None:
     """Register data download tools (idempotent)."""
-    from bioagent.tools.registry import registry
-
-    from bioagent.tools.data.url_download import download_url
-    from bioagent.tools.data.geo_tools import download_geo_dataset
     from bioagent.tools.data.cbioportal_tools import (
-        search_cbioportal_studies,
         download_cbioportal_study,
+        search_cbioportal_studies,
     )
-    from bioagent.tools.data.tcga_gdc_tools import (
-        search_gdc_datasets,
-        download_gdc_file,
-    )
-    from bioagent.tools.data.ncbi_tools import download_ncbi_sequences
     from bioagent.tools.data.encode_tools import (
-        search_encode_datasets,
         download_encode_file,
+        search_encode_datasets,
     )
+    from bioagent.tools.data.geo_tools import download_geo_dataset
     from bioagent.tools.data.manual_instructions import generate_download_instructions
+    from bioagent.tools.data.ncbi_tools import download_ncbi_sequences
+    from bioagent.tools.data.tcga_gdc_tools import (
+        download_gdc_file,
+        search_gdc_datasets,
+    )
+    from bioagent.tools.data.url_download import download_url
+    from bioagent.tools.registry import registry
 
     _reg = registry
 

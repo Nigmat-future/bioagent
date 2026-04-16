@@ -9,9 +9,9 @@ from __future__ import annotations
 
 def register_execution_tools() -> None:
     """Register all execution and file tools into the global registry (idempotent)."""
-    from bioagent.tools.execution.python_runner import execute_python
     from bioagent.tools.execution.package_manager import install_package
-    from bioagent.tools.general.file_tools import read_file, write_file, list_files
+    from bioagent.tools.execution.python_runner import execute_python
+    from bioagent.tools.general.file_tools import list_files, read_file, write_file
     from bioagent.tools.registry import registry
 
     if "execute_python" not in registry.list_tools():

@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
 from anthropic import Anthropic
 
-from bioagent.config.settings import settings
 from bioagent.llm.clients import get_anthropic_client, get_anthropic_model
 from bioagent.llm.tool_loop import run_tool_loop
 from bioagent.state.schema import ResearchState
-from bioagent.tools.registry import ToolRegistry
 
 logger = logging.getLogger(__name__)
 

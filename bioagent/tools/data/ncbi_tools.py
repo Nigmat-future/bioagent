@@ -27,10 +27,11 @@ def download_ncbi_sequences(
 
     Returns a status string describing what was downloaded.
     """
+    import urllib.parse
+    import urllib.request
+
     from bioagent.config.settings import settings
     from bioagent.tools.execution.sandbox import ensure_workspace
-    import urllib.request
-    import urllib.parse
 
     ensure_workspace()
     data_dir = settings.workspace_path / "data"
@@ -110,7 +111,7 @@ def download_ncbi_sequences(
 def _biopython_fetch(acc_list: list, database: str, rettype: str, out_path, email: str) -> str:
     """Download using BioPython's Entrez module."""
     try:
-        from Bio import Entrez, SeqIO  # type: ignore
+        from Bio import Entrez  # type: ignore
 
         Entrez.email = email
 

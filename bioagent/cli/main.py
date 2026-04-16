@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Optional
 
 import typer
-from rich.console import Console
 
 from bioagent.cli.display import (
     console,
@@ -167,7 +166,7 @@ def research(
     tid = thread_id or str(uuid.uuid4())
     config = {"configurable": {"thread_id": tid}, "recursion_limit": 100}
 
-    console.print(f"\n[bold green]BioAgent Research Session[/bold green]")
+    console.print("\n[bold green]BioAgent Research Session[/bold green]")
     console.print(f"[dim]Thread: {tid}[/dim]")
     console.print(f"[bold]Question:[/bold] {question}")
     if topic:
@@ -228,7 +227,7 @@ def resume(
 
     config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 100}
 
-    console.print(f"\n[bold green]Resuming Research Session[/bold green]")
+    console.print("\n[bold green]Resuming Research Session[/bold green]")
     console.print(f"[dim]Thread: {thread_id}[/dim]")
     console.print()
 
@@ -357,8 +356,8 @@ def export(
     console.print(f"\n[bold green]Exporting research: {topic}[/bold green]")
     console.print(f"[dim]Output directory: {out}[/dim]\n")
 
-    from bioagent.export.markdown_export import export_markdown
     from bioagent.export.latex_export import export_latex
+    from bioagent.export.markdown_export import export_markdown
 
     if format in ("md", "both"):
         try:

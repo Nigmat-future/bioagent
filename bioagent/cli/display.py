@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from rich.console import Console
-from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.syntax import Syntax
 from rich.table import Table
 
 console = Console()
@@ -129,7 +126,7 @@ def display_session_status(
     # Show errors if any
     errors = state.get("errors", [])
     if errors:
-        console.print(f"\n[bold red]Recent Errors:[/bold red]")
+        console.print("\n[bold red]Recent Errors:[/bold red]")
         for err in errors[-5:]:
             console.print(f"  - {err[:200]}")
 

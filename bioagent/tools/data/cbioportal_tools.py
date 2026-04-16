@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 import urllib.request
 
 logger = logging.getLogger(__name__)
@@ -167,8 +166,8 @@ def _download_data_type(study_id: str, dtype: str, data_dir) -> str:
 def _json_to_csv(json_path, dtype: str) -> None:
     """Convert JSON API response to a flat CSV for easy loading."""
     try:
-        import json as _json
         import csv
+        import json as _json
 
         data = _json.loads(json_path.read_bytes())
         if not isinstance(data, list) or not data:

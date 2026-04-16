@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 from bioagent.config.settings import settings
+
+if TYPE_CHECKING:
+    import httpx
 
 logger = logging.getLogger(__name__)
 

@@ -148,7 +148,7 @@ def result_validation_node(state: ResearchState) -> dict[str, Any]:
     """
     results = state.get("analysis_results", [])
     exec_results = state.get("execution_results", [])
-    errors = state.get("errors", [])
+    state.get("errors", [])
 
     # Check if there are any actual results
     if results:
@@ -231,9 +231,9 @@ def human_approval_node(state: ResearchState) -> dict[str, Any]:
         context_parts.append(f"Plan: {plan_text}")
 
     print(f"\n{'='*60}")
-    print(f"  Human Approval Required")
+    print("  Human Approval Required")
     print(f"  Question: {question}")
-    print(f"\n  " + "\n  ".join(context_parts))
+    print("\n  " + "\n  ".join(context_parts))
     print(f"{'='*60}")
 
     try:
@@ -408,8 +408,8 @@ def _auto_export(state: ResearchState) -> None:
     """Export the finalized manuscript to the workspace output directory."""
     try:
         from bioagent.config.settings import settings
-        from bioagent.export.markdown_export import export_markdown
         from bioagent.export.latex_export import export_latex
+        from bioagent.export.markdown_export import export_markdown
 
         out_dir = settings.workspace_path / "output"
         export_markdown(state, out_dir)

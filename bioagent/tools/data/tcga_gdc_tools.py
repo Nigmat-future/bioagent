@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
-import urllib.request
 import urllib.parse
+import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +114,6 @@ def download_gdc_file(file_id: str, filename: str = "") -> str:
     # Resolve filename from metadata if not provided
     if not filename:
         filename = _resolve_gdc_filename(file_id) or f"{file_id}.dat"
-
-    out_path = data_dir / filename
 
     # Check if it's a controlled-access file first
     access = _check_gdc_access(file_id)

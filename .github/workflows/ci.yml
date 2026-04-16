@@ -22,15 +22,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install pytest pytest-cov ruff
 
       - name: Lint with ruff
-        run: ruff check bioagent/ --select E,F,W,I --ignore E501
+        run: ruff check bioagent/
 
       - name: Run unit and export tests (no external API calls)
         run: |
@@ -47,7 +47,7 @@ jobs:
           file: coverage.xml
           fail_ci_if_error: false
 
-  lint:
+  typecheck:
     name: Type check (mypy)
     runs-on: ubuntu-latest
     steps:
@@ -57,13 +57,34 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install mypy
 
       - name: Run mypy
-        run: mypy bioagent/ --ignore-missing-imports --no-error-summary
-        continue-on-error: true  # type errors are non-blocking for now
+        run: mypy bioagent/ --ignore-missing-imports
+
+  reproducibility:
+    name: Reproducibility smoke test (Docker + dry-run)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify lock file exists
+        run: test -f requirements-lock.txt
+
+      - name: Build Docker image
+        run: docker build -t bioagent:ci .
+
+      - name: Graph compile dry-run in container
+        run: |
+          docker run --rm bioagent:ci python -c "
+          from bioagent.graph.research_graph import compile_research_graph
+          g = compile_research_graph()
+          nodes = list(g.get_graph().nodes)
+          assert 'data_acquisition' in nodes
+          print('OK: graph compiles with', len(nodes), 'nodes')
+          "

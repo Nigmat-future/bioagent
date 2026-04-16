@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from pathlib import Path  # noqa: F401  (used in string type annotations)
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,6 @@ def _download_via_geoparse(acc: str, data_dir) -> str:
             )
             import GEOparse  # type: ignore
 
-        from bioagent.config.settings import settings
         gse = GEOparse.get_GEO(
             geo=acc,
             destdir=str(data_dir),
@@ -83,7 +83,7 @@ def _download_via_geoparse(acc: str, data_dir) -> str:
         # Export expression matrix if available
         output_files = list(data_dir.glob(f"{acc}*"))
         if not output_files:
-            return f"ERROR: GEOparse completed but no files written"
+            return "ERROR: GEOparse completed but no files written"
 
         # Try to extract a clean expression matrix CSV
         csv_path = _extract_expression_matrix(gse, acc, data_dir)
@@ -105,7 +105,6 @@ def _download_via_geoparse(acc: str, data_dir) -> str:
 def _extract_expression_matrix(gse, acc: str, data_dir) -> "Path | None":
     """Attempt to extract expression matrix as CSV from a GEOparse GSE object."""
     try:
-        import pandas as pd
         from pathlib import Path
 
         # Collect all GPL tables
@@ -144,9 +143,6 @@ def _extract_expression_matrix(gse, acc: str, data_dir) -> "Path | None":
 
 def _download_via_ftp(acc: str, data_dir) -> str:
     """Direct FTP/HTTPS download of series matrix file."""
-    import urllib.request
-    from bioagent.config.settings import settings
-    from pathlib import Path
 
     # Build NCBI FTP URL
     prefix = acc[:-3] + "nnn" if len(acc) > 3 else acc
@@ -183,12 +179,13 @@ def _download_via_ftp(acc: str, data_dir) -> str:
 def _parse_series_matrix(txt_path, acc: str, data_dir) -> "Path | None":
     """Parse a GEO series matrix text file into a tidy CSV."""
     try:
-        import pandas as pd
         from pathlib import Path
+
+        import pandas as pd
 
         lines = txt_path.read_text(encoding="utf-8", errors="replace").splitlines()
         data_start = next(
-            (i for i, l in enumerate(lines) if not l.startswith("!")),
+            (i for i, line in enumerate(lines) if not line.startswith("!")),
             None,
         )
         if data_start is None:

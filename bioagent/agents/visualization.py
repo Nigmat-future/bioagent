@@ -113,8 +113,8 @@ class VisualizationAgent(BaseAgent):
 
         # Fallback: scan workspace/figures/ for generated files
         if not figures:
+
             from bioagent.config.settings import settings
-            from pathlib import Path
             fig_dir = settings.workspace_path / "figures"
             if fig_dir.exists():
                 for f in sorted(fig_dir.glob("*.pdf")):

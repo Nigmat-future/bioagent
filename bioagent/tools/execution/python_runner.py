@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
-import tempfile
 import uuid
-from pathlib import Path
 
 from bioagent.config.settings import settings
 

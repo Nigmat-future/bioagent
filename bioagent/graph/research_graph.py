@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from langgraph.graph import END, StateGraph
 
@@ -175,6 +174,7 @@ def compile_research_graph():
 
         if settings.use_sqlite_checkpoints:
             import sqlite3
+
             from langgraph.checkpoint.sqlite import SqliteSaver
 
             checkpoint_path = settings.checkpoint_path / "research.db"

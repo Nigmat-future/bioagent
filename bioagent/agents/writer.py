@@ -84,7 +84,7 @@ class WriterAgent(BaseAgent):
         if fig_context:
             context_parts.append(f"## Generated Figures\n{fig_context}\n\n")
         if gaps:
-            context_parts.append(f"## Research Gaps Addressed\n" + "\n".join(gaps[:5]) + "\n\n")
+            context_parts.append("## Research Gaps Addressed\n" + "\n".join(gaps[:5]) + "\n\n")
 
         # Revision mode: reviewer has already scored the paper and left specific issues
         is_revision = bool(revision_notes) and bool(existing_sections)

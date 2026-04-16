@@ -31,10 +31,10 @@ class AnalystAgent(BaseAgent):
         return "You are a code analysis agent for bioinformatics."
 
     def get_tools(self) -> tuple[list[dict], dict[str, Any]]:
-        from bioagent.tools.execution.register import register_execution_tools
-        from bioagent.tools.bioinformatics.sequence_tools import register_tools as reg_seq
         from bioagent.tools.bioinformatics.expression_tools import register_tools as reg_expr
         from bioagent.tools.bioinformatics.genomic_tools import register_tools as reg_genomic
+        from bioagent.tools.bioinformatics.sequence_tools import register_tools as reg_seq
+        from bioagent.tools.execution.register import register_execution_tools
         from bioagent.tools.registry import registry
 
         # Register all tools (idempotent — each function checks before registering)
@@ -59,8 +59,8 @@ class AnalystAgent(BaseAgent):
         question = state.get("research_question", "")
         hypothesis = state.get("selected_hypothesis", {})
         plan = state.get("experiment_plan", {})
-        gaps = state.get("research_gaps", [])
-        summary = state.get("literature_summary", "")
+        state.get("research_gaps", [])
+        state.get("literature_summary", "")
         iteration = state.get("iteration_count", 0)
         errors = state.get("errors", [])
         prev_results = state.get("execution_results", [])

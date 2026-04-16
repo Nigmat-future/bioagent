@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -35,8 +34,8 @@ class LiteratureAgent(BaseAgent):
         return "You are a literature review agent for bioinformatics research."
 
     def get_tools(self) -> tuple[list[dict], dict[str, Any]]:
-        from bioagent.tools.literature.biomcp_tools import register_tools as reg_biomcp
         from bioagent.tools.literature.arxiv_tools import register_tools as reg_arxiv
+        from bioagent.tools.literature.biomcp_tools import register_tools as reg_biomcp
         from bioagent.tools.literature.paper_reader import register_tools as reg_reader
         from bioagent.tools.registry import registry
 

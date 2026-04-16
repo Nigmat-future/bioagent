@@ -7,7 +7,6 @@ would assess when evaluating an AI-generated research paper.
 from __future__ import annotations
 
 import logging
-import math
 import re
 from dataclasses import dataclass, field
 from typing import Any
