@@ -13,8 +13,16 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import sys
 import time
 from pathlib import Path
+
+# Ensure the repository root is on sys.path when the script is launched
+# directly (e.g. `python benchmarks/baselines/single_prompt.py`), since
+# Python only adds the script's directory by default.
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 logger = logging.getLogger(__name__)
 
