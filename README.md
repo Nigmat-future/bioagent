@@ -1,9 +1,11 @@
 # BioAgent: Autonomous Multi-Agent System for End-to-End Bioinformatics Research
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-green.svg)](https://github.com/langchain-ai/langgraph)
-[![Anthropic Claude](https://img.shields.io/badge/Claude-Sonnet%204.5-orange.svg)](https://www.anthropic.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-1.0+-green.svg)](https://github.com/langchain-ai/langgraph)
+[![Anthropic Claude](https://img.shields.io/badge/Claude-Sonnet%204.6-orange.svg)](https://www.anthropic.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-143%20passing-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/coverage-48%25-yellow.svg)](pyproject.toml)
 
 BioAgent is an autonomous research system that conducts **end-to-end bioinformatics research** — from literature review and hypothesis generation through computational analysis, scientific writing, and self-review — without human intervention between steps.
 
@@ -70,11 +72,19 @@ BioAgent is an autonomous research system that conducts **end-to-end bioinformat
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_ORG/bioagent.git
+git clone https://github.com/nigmatrahim/bioagent.git
 cd bioagent
 
-# Install in development mode
+# Install in development mode (editable)
+pip install -e ".[dev]"
+
+# Or, for byte-identical reproduction of benchmark results:
+pip install -r requirements-lock.txt
 pip install -e .
+
+# Or run in Docker:
+docker build -t bioagent:0.2.0 .
+docker run --rm -e BIOAGENT_ANTHROPIC_API_KEY=$KEY bioagent:0.2.0 research "Your question"
 ```
 
 ### Configuration
@@ -194,12 +204,12 @@ workspace/
 If you use BioAgent in your research, please cite:
 
 ```bibtex
-@article{bioagent2025,
+@article{rahim2026bioagent,
   title   = {BioAgent: An Autonomous Multi-Agent System for End-to-End Bioinformatics Research},
-  author  = {BioAgent Development Team},
+  author  = {Rahim, Nigmat},
   journal = {Bioinformatics},
-  year    = {2025},
-  note    = {Preprint}
+  year    = {2026},
+  note    = {Under review. Preprint at \url{https://github.com/nigmatrahim/bioagent}}
 }
 ```
 

@@ -1,0 +1,25 @@
+Subject: Manuscript submission — BioAgent: An Autonomous Multi-Agent System for End-to-End Bioinformatics Research
+
+Dear Editor,
+
+I am pleased to submit for consideration as an Application Note in *Bioinformatics* the manuscript "BioAgent: An Autonomous Multi-Agent System for End-to-End Bioinformatics Research".
+
+BioAgent is an open-source LangGraph-based multi-agent system that takes a natural-language biomedical research question and, without human intervention, conducts literature review (via BioMCP), downloads real datasets (TCGA, GEO, cBioPortal, NCBI, ENCODE), generates and scores hypotheses, writes and executes analysis code, produces publication-quality figures, and drafts a manuscript in Bioinformatics (OUP) LaTeX format. The six specialised agents share a blackboard-pattern ResearchState and communicate through a directed LangGraph StateGraph with controlled iteration cycles. The full pipeline, benchmarks, and manuscript draft for a BRAF V600E melanoma case study are released under MIT at https://github.com/nigmatrahim/bioagent.
+
+The contribution that I believe will be of interest to the Bioinformatics readership is threefold. First, BioAgent is, to our knowledge, the first open-source system that spans the entire literature-to-draft pipeline with both real-dataset acquisition and executable code generation under a single programmatic interface. Existing tools — single-prompt LLM wrappers, AutoGen-style chat, domain-adapted language models such as BioGPT, or code-execution-focused agents such as ChemCrow — cover disjoint subsets of this pipeline. We quantify this with head-to-head benchmarks in Table 1 of the manuscript: on the same BRAF research question, a one-shot LLM scores 1.4/10 weighted composite, an AutoGen-style six-turn chat scores 1.1/10, and the full BioAgent pipeline scores 5.3/10, at a per-manuscript cost of USD 2.47.
+
+Second, we release a formal evaluation framework — six dimensions (literature precision/recall vs. gold-standard PMIDs, hypothesis novelty-testability, analysis success rate, figure count, IMRAD completeness, cost efficiency) with closed-form metric definitions in Supplementary S2 — plus a five-variant ablation runner so that every design choice in BioAgent can be independently ablated and scored against the same baselines.
+
+Third, the system is engineered for reproducibility. Dependencies are pinned to a lock file, the full environment is available as a Dockerfile, random seeds are injected at three explicit sites, SHA-256 output hashes are verifiable through `scripts/verify_hashes.py`, and data provenance for every benchmark case is documented with accession numbers and fallback-hierarchy manual instructions in `benchmarks/data/README.md`. We believe this sets a useful baseline for the reproducibility standards a tool of this kind should meet.
+
+The manuscript is 4 pages plus figures and does not exceed the word limit for an Application Note. Five supplementary documents (S1–S5) cover full case-study output, methods detail, ablation results, error analysis, and reproducibility instructions. All code, benchmark data, and the draft manuscript itself are publicly available.
+
+This work has not been published elsewhere and is not under consideration by any other journal.
+
+Thank you for considering the manuscript. I look forward to the reviewers' feedback.
+
+Sincerely,
+
+Nigmat Rahim
+School of Life Sciences, Peking University
+nigmatrahim@stu.pku.edu.cn
