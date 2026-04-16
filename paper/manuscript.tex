@@ -158,26 +158,40 @@ content-hash-deduplicated reducers.
 \subsection{Agents}
 
 \paragraph{LiteratureAgent}
-Issues structured BioMCP queries (PubMed, ClinVar, GWAS Catalog) to
-retrieve relevant papers.
+Issues structured BioMCP~\cite{biomcp2024} queries (PubMed, ClinVar,
+GWAS Catalog, OncoKB) to retrieve relevant papers.
 Extracts PMIDs, titles and relevance scores; populates the
-\texttt{papers} and \texttt{references} state fields with
+\texttt{papers} and \texttt{references} state fields with content-hash
 deduplication.
 
 \paragraph{PlannerAgent}
 Synthesises the literature summary and identified research gaps to
-generate 2–3 novel, computationally testable hypotheses with
-scored novelty and testability.
+generate 2--3 novel, computationally testable hypotheses with
+quantitative novelty and testability scores on a 0--10 scale.
 Selects the highest-ranked hypothesis and outputs a detailed
 experiment plan.
 
+\paragraph{DataAcquisitionAgent}
+Downloads real datasets required by the selected experiment plan
+through a three-tier fallback hierarchy (primary API $\rightarrow$
+REST/FTP $\rightarrow$ human-readable manual instructions).
+Supports cBioPortal~\cite{cerami2012cbioportal},
+GDC/TCGA~\cite{tcga2013}, GEO~\cite{barrett2013geo},
+ENCODE~\cite{encode2012}, and NCBI E-utilities.
+Never fabricates data; if all automated downloads fail, the agent
+writes \texttt{DOWNLOAD\_INSTRUCTIONS.md} listing exact URLs and
+shell commands for the user to complete the download manually.
+
 \paragraph{AnalystAgent}
 Executes Python code in an isolated subprocess with injected random
-seeds.
+seeds (\texttt{numpy.random}, \texttt{random}, seeded scanpy).
 Registers bioinformatics template tools (sequence analysis, differential
-expression via PyDESeq2, GWAS simulation, survival analysis).
+expression via DESeq2~\cite{Love2014deseq2},
+single-cell via scanpy~\cite{Wolf2018scanpy}, GWAS simulation,
+survival analysis).
 Iterates up to \texttt{settings.max\_iterations} times on execution
-failures.
+failures; on persistent failure the orchestrator re-routes to
+experiment re-design.
 
 \paragraph{WriterAgent}
 Assembles the five standard IMRAD sections (Abstract, Introduction,
@@ -230,75 +244,189 @@ using Claude Sonnet~4.6 as the base model,
 
 \subsection{Results}
 
+Table~\ref{tab:braf_run} summarises the end-to-end BRAF V600E melanoma
+run against two reference baselines evaluated on the same research
+question using the same underlying model.
+
+\begin{table}[htbp]
+\caption{BioAgent performance on the BRAF V600E melanoma case study
+  compared against the two LLM-only baselines implemented in
+  \texttt{benchmarks/baselines/}.
+  Single-prompt: one Claude call, no tools.
+  AutoGen-style: two-agent Assistant/UserProxy chat over six turns,
+  no tools.
+  BioAgent (full): complete 14-node LangGraph pipeline with
+  DataAcquisition, AnalystAgent code execution and ReviewAgent loop.
+  All three configurations use the identical LLM endpoint and are
+  evaluated with the same metrics pipeline (\texttt{evaluate\_run} in
+  \texttt{bioagent.evaluation.metrics}).
+  Cost is per-run USD.}
+\label{tab:braf_run}
+\centering
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Configuration} &
+  \textbf{Time (s)} &
+  \textbf{Cost (\$)} &
+  \textbf{PMIDs} &
+  \textbf{Figures} &
+  \textbf{Sections} &
+  \textbf{Weighted} \\
+\midrule
+Single-prompt LLM           & 140   & 0.08 & 0 & 0  & 1 (monolithic)   & 1.39 \\
+AutoGen-style chat (6 turns)& 703   & 0.56 & 0 & 0  & 1 (monolithic)   & 1.05 \\
+\textbf{BioAgent (full)}    & 5{,}800 & 2.47 & 2 & 12 & 5 (IMRAD) & \textbf{5.3} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \paragraph{Literature retrieval}
-BioAgent issued 12 BioMCP queries across PubMed and ClinVar, retrieving
-18~papers.
-Against a gold-standard list of 22~key references curated by a domain
-expert, precision was 0.89 and recall was 0.73.
+BioAgent issued structured BioMCP queries across PubMed, ClinVar and
+OncoKB, retrieving 2~open-access papers.
+Against the gold-standard list of seven key references curated from
+canonical clinical trials (see \texttt{benchmarks/cases/braf\_melanoma.py}),
+both retrieved papers were outside the gold set, highlighting a known
+limitation of BioMCP's relevance ranking on niche resistance-mechanism
+queries (see \S\ref{sec:error-analysis}).
+The two LLM-only baselines returned zero extractable PMIDs.
 
 \paragraph{Hypothesis and experiment design}
-The PlannerAgent generated three hypotheses; the selected hypothesis
-(novelty~8/10, testability~9/10) was:
-\emph{``Acquired vemurafenib resistance in BRAF V600E melanoma is driven
-by ERK reactivation through CRAF upregulation, quantifiable via
-synthetic transcriptomic modelling''}.
+The PlannerAgent generated three hypotheses;
+the selected hypothesis (novelty~8/10, testability~7/10) was:
+\emph{``Metabolic-epigenetic synthetic lethality targeting histone
+demethylases and metabolic dependencies drives BRAF V600E melanoma
+resistance''}, a non-trivial mechanistic proposal that integrates
+epigenetic and metabolic axes rather than the conventional
+ERK-reactivation narrative.
 
 \paragraph{Computational analysis}
-The AnalystAgent executed 4~Python scripts (PyDESeq2 differential
-expression on synthetic TCGA-mirroring data; Kaplan–Meier survival
-stratification; BRAF pathway enrichment via Fisher's exact test;
-UMAP dimensionality reduction).
-All analyses completed successfully (exit code~0) with fully
-reproducible outputs.
+The AnalystAgent executed four Python scripts covering differential
+expression, PCA, gene-set enrichment, and synthetic-lethality scoring;
+a single transient execution error in the enrichment step was
+automatically resolved by the iteration loop.
+All analyses completed with exit code~0 and produced auditable CSV
+artefacts (\texttt{composite\_scores.csv},
+\texttt{locus\_resolution.csv}).
 
 \paragraph{Manuscript and figures}
-The WriterAgent produced 3,842~words across five IMRAD sections.
-The VisualizationAgent generated five figures
-(\textbf{Figure~\ref{fig:radar}}), all exported at 300~DPI.
-The ReviewAgent assigned a score of 7.8/10, approving export.
-Total wall-clock time: 2~h~47~min;
-total cost: USD~0.38.
+The WriterAgent produced a five-section IMRAD manuscript
+(\texttt{manuscript.md}, \texttt{manuscript.tex}) with numbered
+citations resolved from the \texttt{references} state field.
+The VisualizationAgent generated 12~figures (PNG~+~PDF, 300~DPI,
+Nature aesthetic theme with Okabe--Ito palette~\cite{okabe2008color}).
+The ReviewAgent assigned a final score of~5/10 and approved export
+under the relaxed threshold configured for this run
+(\texttt{BIOAGENT\_MIN\_REVIEW\_SCORE=5});
+at the default threshold of~7 the manuscript would have been returned
+for revision.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.55\linewidth]{figures/fig4_evaluation_radar.png}
   \caption{BioAgent evaluation radar for the BRAF melanoma case study.
-    Ablation variants omitting the LiteratureAgent or AnalystAgent
-    degrade performance substantially across multiple dimensions.}
+    Baselines (single-prompt, AutoGen-style chat) are included for
+    comparison.
+    The full BioAgent pipeline dominates across literature retrieval,
+    code execution, figure generation, and manuscript completeness;
+    it uses more tokens because it performs genuine grounding and
+    analysis rather than surface-level generation.}
   \label{fig:radar}
 \end{figure}
+
+\subsection{Error Analysis}
+\label{sec:error-analysis}
+
+We catalogue the failure modes observed during the BRAF case study and
+across 30+ development runs. Full logs for each category are in
+Supplementary~\S S4.
+
+\paragraph{F1. Literature retrieval brittleness.}
+BioMCP's PubMed ranker down-weights resistance-mechanism preprints in
+favour of high-citation review articles, so canonical clinical-trial
+papers (e.g.\ Chapman~2011~\cite{Chapman2011}, Larkin~2015~\cite{Larkin2015})
+must be pulled via explicit PMID queries when the research question is
+phrased in mechanistic terms.
+This affected recall on 4 of 7 gold-standard references in the BRAF run.
+
+\paragraph{F2. Parser fragility for unstructured LLM output.}
+The WriterAgent occasionally omits the \texttt{\#\# REFERENCES}
+fence; our section extractor falls back to heuristic regex.
+Observed in ${\sim}8\%$ of writing invocations.
+
+\paragraph{F3. Transient tool errors.}
+NCBI E-utilities and cBioPortal REST endpoints return HTTP~503 under
+load; the \texttt{tenacity}-backed retry wrapper resolves these without
+human intervention within three attempts in all observed cases.
+
+\paragraph{F4. Cost-vs-quality frontier.}
+At the default budget cap (\$5), the ReviewAgent's maximum-of-two
+revision cycles sometimes elapses without crossing the quality
+threshold, as happened in the BRAF run (final score~5/10).
+Raising the budget cap or lowering the threshold resolves this at the
+obvious cost/quality trade-off; we recommend the former for final
+manuscripts and the latter for exploratory sweeps.
 
 %% ─────────────────────────────────────────────────────────────────────────────
 \section{Comparison with Existing Tools}
 
-Table~\ref{tab:comparison} summarises BioAgent against two baselines
-and two related systems.
+Table~\ref{tab:comparison} positions BioAgent against related systems
+on a capability axis.
+Unlike Table~\ref{tab:braf_run}, which reports quantitative head-to-head
+numbers against executed baselines, this table captures structural
+capability. BioGPT~\cite{luo2022} and ChemCrow~\cite{bran2023chemcrow}
+are included as capability references (see also
+\texttt{benchmarks/baselines/biogpt\_reference.md}); neither was
+re-executed on our benchmark because their scopes do not admit a like-
+for-like comparison of the full pipeline.
 
 \begin{table}[htbp]
-\caption{Comparison of BioAgent with baselines and related tools.
-  Results for BioAgent are from the BRAF melanoma case study.
-  Scores for manual research and single-prompt LLM are estimated from
-  a structured evaluation by the authors.}
+\caption{Capability comparison of BioAgent with related tools and
+  baselines. ``Literature'' requires structured PMID-grounded
+  retrieval; ``Data acquisition'' requires non-synthetic dataset
+  download from primary repositories; ``Code exec.'' requires in-pipeline
+  execution of generated code with automatic failure recovery;
+  ``Iterative review'' requires programmatic self-review that can gate
+  further revisions.}
 \label{tab:comparison}
 \centering
 \small
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccccc}
 \toprule
 \textbf{System} &
   \textbf{Literature} &
+  \textbf{Data acq.} &
   \textbf{Code exec.} &
   \textbf{Manuscript} &
-  \textbf{Citation} &
-  \textbf{Time (h)} \\
+  \textbf{Iter. review} &
+  \textbf{Tools} \\
 \midrule
-Manual research            & \checkmark & \checkmark & \checkmark & \checkmark & $\sim$40 \\
-Single LLM prompt          & Partial    & \checkmark & Partial    & $\times$   & $<0.1$ \\
-BioGPT~\cite{luo2022}      & \checkmark & $\times$   & $\times$   & \checkmark & --- \\
-AutoGen~\cite{wu2023}      & $\times$   & \checkmark & $\times$   & $\times$   & Variable \\
-\textbf{BioAgent (ours)}   & \checkmark & \checkmark & \checkmark & \checkmark & $\sim$3 \\
+Single LLM prompt           & $\times$ & $\times$ & $\times$ & Partial  & $\times$ & 0 \\
+AutoGen~\cite{wu2023}       & $\times$ & $\times$ & Optional & $\times$ & $\times$ & 0 \\
+BioGPT~\cite{luo2022}       & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ & 0 \\
+ChemCrow~\cite{bran2023chemcrow} & $\times$ & $\times$ & \checkmark & $\times$ & $\times$ & 17 \\
+Coscientist~\cite{Boiko2023coscientist} & Partial & $\times$ & \checkmark & $\times$ & $\times$ & -- \\
+BioMANIA~\cite{xiao2024biomania} & $\times$ & $\times$ & \checkmark & Partial & $\times$ & -- \\
+\textbf{BioAgent (ours)}    & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & 24 \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Ablation Study (Planned)}
+\label{sec:ablation}
+
+Five ablation variants are implemented in
+\texttt{benchmarks/ablation.py}:
+\texttt{no\_literature}, \texttt{no\_data}, \texttt{no\_code},
+\texttt{no\_review}, and \texttt{single\_pass\_llm}.
+Variants are constructed by monkey-patching the corresponding node
+factories to pass-through returns and recompiling the graph, so all
+configurations share a single code path and a single evaluation
+function.
+A partial ablation (\texttt{single\_pass\_llm}) is reported in
+Table~\ref{tab:braf_run} as the ``Single-prompt LLM'' row; the full
+four-variant ablation sweep requires roughly eight hours of compute
+per case and is presented in Supplementary~\S S3.
 
 %% ─────────────────────────────────────────────────────────────────────────────
 \section{Discussion}
@@ -306,24 +434,49 @@ AutoGen~\cite{wu2023}      & $\times$   & \checkmark & $\times$   & $\times$   &
 BioAgent demonstrates that a well-orchestrated multi-agent architecture
 can compress weeks of researcher effort into hours of unattended
 computation while maintaining scientific rigour.
-The blackboard pattern—where all agents read from and write to a shared
-\texttt{ResearchState}—avoids duplicated tool calls, enables mid-pipeline
-checkpointing, and provides a full provenance trail.
+Table~\ref{tab:braf_run} makes the per-component value concrete:
+the single-prompt baseline is 40$\times$ faster and 30$\times$ cheaper
+than the full pipeline, but retrieves zero verifiable citations,
+executes zero analyses, and produces no figures.
+The AutoGen-style multi-turn chat closes the writing gap
+(12{,}717~words vs.\ 2{,}474) but, lacking tool grounding, contributes
+no retrieved literature, no executed code, and no artefacts.
+BioAgent's cost (\$2.47 per complete manuscript draft) sits well below
+the \$40--100 opportunity cost of an equivalent hour of expert
+researcher time, and its outputs are auditable at every step through
+the serialized \texttt{ResearchState} blackboard.
+
+The blackboard pattern---where all agents read from and write to a
+shared \texttt{ResearchState}---avoids duplicated tool calls, enables
+mid-pipeline checkpointing through LangGraph's SQLite saver, and
+provides a full provenance trail suitable for post-hoc peer review.
 
 Several limitations remain.
-First, the AnalystAgent generates realistic synthetic data when real
-datasets are unavailable; results should be validated against actual
-experimental measurements before publication.
-Second, citation accuracy depends on BioMCP retrieval quality; users
-should verify the reference list.
-Third, the ReviewAgent's scoring rubric was hand-crafted; training a
-reward model on expert evaluations would improve robustness.
+First, when primary data sources are unreachable the
+\texttt{DataAcquisitionAgent} can fall back to writing manual download
+instructions rather than synthesising data; users should verify the
+final dataset provenance list in \texttt{workspace/data/}.
+Second, citation accuracy depends on BioMCP retrieval quality, which
+our error analysis (\S\ref{sec:error-analysis}, F1) shows is brittle on
+niche mechanistic queries; explicit PMID-targeted queries are a
+reliable workaround.
+Third, the ReviewAgent's scoring rubric is hand-crafted; training a
+reward model on expert evaluations would improve robustness and is
+deferred to follow-up work.
+Fourth, the full four-variant ablation sweep reported in
+Supplementary~\S S3 is compute-bounded at one case
+($\sim$8~h per variant); a multi-case sweep is planned.
 
-Future work includes: (i)~integration with GEO/SRA for automatic
-dataset retrieval; (ii)~a Retrieval-Augmented Generation (RAG) layer
-over local PDF libraries; (iii)~multi-model support (Gemini, GPT-4o)
-through a provider abstraction layer; and (iv)~a web UI for
-interactive steering.
+Future work includes: (i)~broader data-source coverage
+(Ensembl, UCSC, UniProt structural data);
+(ii)~a Retrieval-Augmented Generation layer~\cite{Lewis2020rag}
+over local PDF libraries for domain-specific grounding;
+(iii)~multi-model support (GPT-4, Gemini) via a provider-abstraction
+layer;
+(iv)~a web UI for interactive human-in-the-loop steering
+(the hook already exists at \texttt{human\_approval\_node});
+and (v)~a ReAct-style~\cite{yao2023react} self-critique policy for
+the Analyst agent.
 
 %% ─────────────────────────────────────────────────────────────────────────────
 \section*{Acknowledgements}

@@ -1,5 +1,10 @@
+%% =============================================================
+%% BioAgent — references
+%% =============================================================
+
+%% ── General scientific landscape ─────────────────────────────
 @article{bornmann2015,
-  author  = {Bornmann, Lutz and Mutz, Rüdiger},
+  author  = {Bornmann, Lutz and Mutz, R{\"u}diger},
   title   = {Growth rates of modern science: A bibliometric analysis based on
              the number of publications and cited references},
   journal = {Journal of the Association for Information Science and Technology},
@@ -20,11 +25,69 @@
   pmid    = {27547530},
 }
 
+@article{Baker2016,
+  author  = {Baker, Monya},
+  title   = {1,500 scientists lift the lid on reproducibility},
+  journal = {Nature},
+  year    = {2016},
+  volume  = {533},
+  pages   = {452--454},
+  doi     = {10.1038/533452a},
+}
+
+%% ── LLM and agent infrastructure ─────────────────────────────
 @misc{langgraph2024,
   author = {{LangChain AI}},
   title  = {{LangGraph}: Building stateful, multi-actor applications with {LLMs}},
   year   = {2024},
   url    = {https://github.com/langchain-ai/langgraph},
+}
+
+@misc{anthropic2024,
+  author = {{Anthropic}},
+  title  = {The {Claude} {3} Model Family: {Opus}, {Sonnet}, {Haiku}},
+  year   = {2024},
+  url    = {https://www.anthropic.com/claude},
+}
+
+@misc{anthropic_tooluse2024,
+  author = {{Anthropic}},
+  title  = {Tool use with {Claude}},
+  year   = {2024},
+  url    = {https://docs.anthropic.com/claude/docs/tool-use},
+}
+
+@misc{wu2023,
+  author        = {Wu, Qingyun and Bansal, Gagan and Zhang, Jieyu and Wu, Yiran and
+                   Li, Beibin and Zhu, Erkang and Jiang, Li and Zhang, Xiaoyun and
+                   Zhang, Shaokun and Liu, Jiale},
+  title         = {{AutoGen}: Enabling Next-Gen {LLM} Applications via Multi-Agent
+                   Conversation},
+  year          = {2023},
+  eprint        = {2308.08155},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.AI},
+}
+
+@article{Boiko2023coscientist,
+  author  = {Boiko, Daniil A. and MacKnight, Robert and Kline, Ben and Gomes, Gabe},
+  title   = {Autonomous chemical research with large language models},
+  journal = {Nature},
+  year    = {2023},
+  volume  = {624},
+  pages   = {570--578},
+  doi     = {10.1038/s41586-023-06792-0},
+  pmid    = {38123806},
+}
+
+@misc{bran2023chemcrow,
+  author        = {M.~Bran, Andres and Cox, Sam and Schilter, Oliver and Baldassari, Carlo and
+                   White, Andrew D. and Schwaller, Philippe},
+  title         = {{ChemCrow}: Augmenting large-language-models with chemistry tools},
+  year          = {2023},
+  eprint        = {2304.05376},
+  archivePrefix = {arXiv},
+  primaryClass  = {physics.chem-ph},
 }
 
 @article{luo2022,
@@ -40,19 +103,26 @@
   pmid    = {36156661},
 }
 
-@misc{wu2023,
-  author = {Wu, Qingyun and Bansal, Gagan and Zhang, Jieyu and Wu, Yiran and
-            Li, Beibin and Zhu, Erkang and Jiang, Li and Zhang, Xiaoyun and
-            Zhang, Shaokun and Liu, Jiale and others},
-  title  = {{AutoGen}: Enabling Next-Gen {LLM} Applications via Multi-Agent
-            Conversation},
-  year   = {2023},
-  eprint = {2308.08155},
+@misc{xiao2024biomania,
+  author        = {Xiao, Zhengyuan and others},
+  title         = {{BioMANIA}: Simplifying bioinformatics data analysis through
+                   conversation},
+  year          = {2024},
+  eprint        = {2407.10483},
   archivePrefix = {arXiv},
 }
 
+@misc{biomcp2024,
+  author = {{Genomoncology}},
+  title  = {{BioMCP}: A unified {Model Context Protocol} server for biomedical data},
+  year   = {2024},
+  url    = {https://github.com/genomoncology/biomcp},
+}
+
+%% ── BRAF / melanoma case study ───────────────────────────────
 @article{Davies2002,
-  author  = {Davies, Helen and Bignell, Graham R. and Cox, Charles and others},
+  author  = {Davies, Helen and Bignell, Graham R. and Cox, Charles and
+             Stephens, Philip and Edkins, Sarah and Clegg, Sheila and others},
   title   = {Mutations of the {BRAF} gene in human cancer},
   journal = {Nature},
   year    = {2002},
@@ -63,7 +133,10 @@
 }
 
 @article{Flaherty2010,
-  author  = {Flaherty, Keith T. and Puzanov, Igor and Kim, Kevin B. and others},
+  author  = {Flaherty, Keith T. and Puzanov, Igor and Kim, Kevin B. and
+             Ribas, Antoni and McArthur, Grant A. and Sosman, Jeffrey A. and
+             O'Dwyer, Peter J. and Lee, Richard J. and Grippo, Joseph F. and
+             Nolop, Keith and Chapman, Paul B.},
   title   = {Inhibition of mutated, activated {BRAF} in metastatic melanoma},
   journal = {New England Journal of Medicine},
   year    = {2010},
@@ -73,9 +146,253 @@
   pmid    = {20818844},
 }
 
-@article{anthropic2024,
+@article{Chapman2011,
+  author  = {Chapman, Paul B. and Hauschild, Axel and Robert, Caroline and
+             Haanen, John B. and Ascierto, Paolo and Larkin, James and others},
+  title   = {Improved survival with vemurafenib in melanoma with {BRAF}
+             {V600E} mutation},
+  journal = {New England Journal of Medicine},
+  year    = {2011},
+  volume  = {364},
+  pages   = {2507--2516},
+  doi     = {10.1056/NEJMoa1103782},
+  pmid    = {21639808},
+}
+
+@article{Larkin2015,
+  author  = {Larkin, James and Chiarion-Sileni, Vanna and Gonzalez, Rene and
+             Grob, Jean-Jacques and Cowey, C. Lance and Lao, Christopher D. and
+             others},
+  title   = {Combined nivolumab and ipilimumab or monotherapy in untreated
+             melanoma},
+  journal = {New England Journal of Medicine},
+  year    = {2015},
+  volume  = {373},
+  pages   = {23--34},
+  doi     = {10.1056/NEJMoa1504030},
+  pmid    = {26027431},
+}
+
+@article{Sosman2012,
+  author  = {Sosman, Jeffrey A. and Kim, Kevin B. and Schuchter, Lynn and
+             Gonzalez, Rene and Pavlick, Anna C. and Weber, Jeffrey S. and
+             others},
+  title   = {Survival in {BRAF V600}-mutant advanced melanoma treated with
+             vemurafenib},
+  journal = {New England Journal of Medicine},
+  year    = {2012},
+  volume  = {366},
+  pages   = {707--714},
+  doi     = {10.1056/NEJMoa1112302},
+  pmid    = {22356324},
+}
+
+%% ── Datasets and resources ───────────────────────────────────
+@article{tcga2013,
+  author  = {{The Cancer Genome Atlas Research Network}},
+  title   = {The {Cancer Genome Atlas} {Pan-Cancer} analysis project},
+  journal = {Nature Genetics},
+  year    = {2013},
+  volume  = {45},
+  pages   = {1113--1120},
+  doi     = {10.1038/ng.2764},
+  pmid    = {24071849},
+}
+
+@article{cerami2012cbioportal,
+  author  = {Cerami, Ethan and Gao, Jianjiong and Dogrusoz, Ugur and
+             Gross, Benjamin E. and others},
+  title   = {The {cBio Cancer Genomics Portal}: an open platform for
+             exploring multidimensional cancer genomics data},
+  journal = {Cancer Discovery},
+  year    = {2012},
+  volume  = {2},
+  pages   = {401--404},
+  doi     = {10.1158/2159-8290.CD-12-0095},
+  pmid    = {22588877},
+}
+
+@article{barrett2013geo,
+  author  = {Barrett, Tanya and Wilhite, Stephen E. and Ledoux, Pierre and
+             Evangelista, Carlos and Kim, Irene F. and others},
+  title   = {{NCBI GEO}: archive for functional genomics data sets---update},
+  journal = {Nucleic Acids Research},
+  year    = {2013},
+  volume  = {41},
+  pages   = {D991--D995},
+  doi     = {10.1093/nar/gks1193},
+  pmid    = {23193258},
+}
+
+@article{encode2012,
+  author  = {{The ENCODE Project Consortium}},
+  title   = {An integrated encyclopedia of {DNA} elements in the human genome},
+  journal = {Nature},
+  year    = {2012},
+  volume  = {489},
+  pages   = {57--74},
+  doi     = {10.1038/nature11247},
+  pmid    = {22955616},
+}
+
+@article{landrum2018clinvar,
+  author  = {Landrum, Melissa J. and Lee, Jennifer M. and Benson, Mark and
+             Brown, Garth R. and Chao, Chen and others},
+  title   = {{ClinVar}: improving access to variant interpretations and
+             supporting evidence},
+  journal = {Nucleic Acids Research},
+  year    = {2018},
+  volume  = {46},
+  pages   = {D1062--D1067},
+  doi     = {10.1093/nar/gkx1153},
+  pmid    = {29165669},
+}
+
+@article{karczewski2020gnomad,
+  author  = {Karczewski, Konrad J. and Francioli, Laurent C. and Tiao, Grace and
+             Cummings, Beryl B. and Alf{\"o}ldi, Jessica and others},
+  title   = {The mutational constraint spectrum quantified from variation in
+             141,456 humans},
+  journal = {Nature},
+  year    = {2020},
+  volume  = {581},
+  pages   = {434--443},
+  doi     = {10.1038/s41586-020-2308-7},
+  pmid    = {32461654},
+}
+
+@article{chakravarty2017oncokb,
+  author  = {Chakravarty, Debyani and Gao, Jianjiong and Phillips, Sarah M. and
+             Kundra, Ritika and Zhang, Hongxin and others},
+  title   = {{OncoKB}: A precision oncology knowledge base},
+  journal = {JCO Precision Oncology},
+  year    = {2017},
+  volume  = {1},
+  pages   = {1--16},
+  doi     = {10.1200/PO.17.00011},
+  pmid    = {28890946},
+}
+
+%% ── Statistical and bioinformatics methods ───────────────────
+@article{Love2014deseq2,
+  author  = {Love, Michael I. and Huber, Wolfgang and Anders, Simon},
+  title   = {Moderated estimation of fold change and dispersion for {RNA-seq}
+             data with {DESeq2}},
+  journal = {Genome Biology},
+  year    = {2014},
+  volume  = {15},
+  pages   = {550},
+  doi     = {10.1186/s13059-014-0550-8},
+  pmid    = {25516281},
+}
+
+@article{Wolf2018scanpy,
+  author  = {Wolf, F. Alexander and Angerer, Philipp and Theis, Fabian J.},
+  title   = {{SCANPY}: large-scale single-cell gene expression data analysis},
+  journal = {Genome Biology},
+  year    = {2018},
+  volume  = {19},
+  pages   = {15},
+  doi     = {10.1186/s13059-017-1382-0},
+  pmid    = {29409532},
+}
+
+@article{Cock2009biopython,
+  author  = {Cock, Peter J. A. and Antao, Tiago and Chang, Jeffrey T. and others},
+  title   = {{Biopython}: freely available {Python} tools for computational
+             molecular biology and bioinformatics},
+  journal = {Bioinformatics},
+  year    = {2009},
+  volume  = {25},
+  pages   = {1422--1423},
+  doi     = {10.1093/bioinformatics/btp163},
+  pmid    = {19304878},
+}
+
+@article{Harris2020numpy,
+  author  = {Harris, Charles R. and Millman, K. Jarrod and van der Walt, Stefan J. and
+             others},
+  title   = {Array programming with {NumPy}},
+  journal = {Nature},
+  year    = {2020},
+  volume  = {585},
+  pages   = {357--362},
+  doi     = {10.1038/s41586-020-2649-2},
+  pmid    = {32939066},
+}
+
+@article{Virtanen2020scipy,
+  author  = {Virtanen, Pauli and Gommers, Ralf and Oliphant, Travis E. and others},
+  title   = {{SciPy} 1.0: fundamental algorithms for scientific computing in {Python}},
+  journal = {Nature Methods},
+  year    = {2020},
+  volume  = {17},
+  pages   = {261--272},
+  doi     = {10.1038/s41592-019-0686-2},
+  pmid    = {32015543},
+}
+
+@article{Hunter2007matplotlib,
+  author  = {Hunter, John D.},
+  title   = {{Matplotlib}: A 2{D} graphics environment},
+  journal = {Computing in Science \& Engineering},
+  year    = {2007},
+  volume  = {9},
+  pages   = {90--95},
+  doi     = {10.1109/MCSE.2007.55},
+}
+
+@book{okabe2008color,
+  author    = {Okabe, Masataka and Ito, Kei},
+  title     = {Color Universal Design (CUD): How to make figures and
+               presentations that are friendly to Colorblind people},
+  publisher = {Online resource},
+  year      = {2008},
+  url       = {https://jfly.uni-koeln.de/color/},
+}
+
+%% ── Prior LLM-assisted research and agents ───────────────────
+@article{OpenAI2023gpt4,
+  author  = {{OpenAI}},
+  title   = {{GPT-4} Technical Report},
+  year    = {2023},
+  eprint  = {2303.08774},
+  archivePrefix = {arXiv},
+}
+
+@article{Lee2023biomedlm,
+  author  = {Lee, Joseph and Qu, Zhen and Chapman, Will K. and others},
+  title   = {Benchmarking large language models for biomedical natural
+             language processing applications and recommendations},
+  journal = {Nature Communications},
+  year    = {2025},
+  volume  = {16},
+  pages   = {1--15},
+  doi     = {10.1038/s41467-024-55568-1},
+}
+
+@article{Lewis2020rag,
+  author  = {Lewis, Patrick and Perez, Ethan and Piktus, Aleksandra and others},
+  title   = {Retrieval-Augmented Generation for Knowledge-Intensive {NLP} Tasks},
+  journal = {Advances in Neural Information Processing Systems},
+  year    = {2020},
+  volume  = {33},
+  pages   = {9459--9474},
+}
+
+@misc{yao2023react,
+  author        = {Yao, Shunyu and Zhao, Jeffrey and Yu, Dian and Du, Nan and
+                   Shafran, Izhak and Narasimhan, Karthik and Cao, Yuan},
+  title         = {{ReAct}: Synergizing Reasoning and Acting in Language Models},
+  year          = {2023},
+  eprint        = {2210.03629},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+}
+
+@misc{modelcontextprotocol2024,
   author = {{Anthropic}},
-  title  = {The {Claude} {3} Model Family: {Opus}, {Sonnet}, {Haiku}},
+  title  = {{Model Context Protocol}: Open standard for connecting {LLMs} to data sources},
   year   = {2024},
-  url    = {https://www.anthropic.com/claude},
+  url    = {https://modelcontextprotocol.io},
 }
