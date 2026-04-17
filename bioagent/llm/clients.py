@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
@@ -33,18 +34,31 @@ def _make_httpx_client() -> "httpx.Client":
 def get_anthropic_client():
     """Return a configured Anthropic client.
 
-    Auto-detects Claude Code's own configuration (base_url, model, auth_token)
-    so it works without manual .env setup when run inside Claude Code.
-    Bypasses system proxy to avoid TLS issues with local proxies.
+    Supports two auth modes:
+      - ``api_key``  → x-api-key header (Anthropic official, most gateways).
+      - ``auth_token`` → Bearer header (some gateways like ai-in.one require this).
+
+    The key is auto-detected from BIOAGENT_ANTHROPIC_API_KEY or
+    ANTHROPIC_AUTH_TOKEN. If neither is set via BIOAGENT_ prefix, we fall
+    back to Claude Code's own env vars.
     """
     from anthropic import Anthropic
 
-    kwargs = {
-        "api_key": settings.get_anthropic_api_key(),
-        "http_client": _make_httpx_client(),
-    }
-
+    key = settings.get_anthropic_api_key()
     base_url = settings.get_anthropic_base_url()
+    http_client = _make_httpx_client()
+
+    # If the key looks like it came from ANTHROPIC_AUTH_TOKEN (Claude Code)
+    # or the gateway is known to require Bearer auth, pass as auth_token.
+    # Otherwise use the standard api_key (x-api-key) header.
+    _BEFORE_GATEWAYS = {"https://ai-in.one"}
+    auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
+    if (auth_token and key == auth_token) or (base_url in _BEFORE_GATEWAYS):
+        kwargs: dict = {"auth_token": key}
+    else:
+        kwargs = {"api_key": key}
+
+    kwargs["http_client"] = http_client
     if base_url:
         kwargs["base_url"] = base_url
 
