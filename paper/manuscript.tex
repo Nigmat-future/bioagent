@@ -274,12 +274,16 @@ question using the same underlying model.
   \textbf{Sections} &
   \textbf{Weighted} \\
 \midrule
-Single-prompt LLM                & 140     & 0.08 & 0  & 0  & 1 (monolithic) & 1.39 \\
-AutoGen-style chat (6 turns)     & 703     & 0.56 & 0  & 0  & 1 (monolithic) & 1.05 \\
-BioAgent -- no\_review (ablation)& 4{,}296 & 0.96 & 15 & 0  & 0 (crashed)    & 2.30 \\
-\textbf{BioAgent (full)}         & 5{,}800 & 2.47 & 2  & 12 & 5 (IMRAD)      & \textbf{5.30} \\
+Single-prompt LLM                  & 140     & 0.08 & 0  & 0  & 1 (monolithic) & 1.39 \\
+AutoGen-style chat (6 turns)       & 703     & 0.56 & 0  & 0  & 1 (monolithic) & 1.05 \\
+BioAgent -- no\_literature$^{a}$   & 260     & 0.16 & 0  & 0  & 0 (crashed)    & 1.70 \\
+BioAgent -- no\_data$^{a,b}$       & 751     & 0.59 & 3  & 0  & 0 (Analyst halted) & 2.71 \\
+BioAgent -- no\_review             & 4{,}296 & 0.96 & 15 & 0  & 0 (crashed)    & 2.30 \\
+\textbf{BioAgent (full)}           & 5{,}800 & 2.47 & 2  & 12 & 5 (IMRAD)      & \textbf{5.30} \\
 \bottomrule
-\end{tabular}
+\end{tabular}\\[2pt]
+{\footnotesize $^{a}$ MiniMax-M7; other rows Claude Sonnet~4.6.
+$^{b}$ AnalystAgent refused to fabricate data when \texttt{workspace/data/} was empty (intended invariant).}
 \end{table}
 
 \paragraph{Literature retrieval}
@@ -424,19 +428,30 @@ Variants are constructed by monkey-patching the corresponding node
 factories to pass-through returns and recompiling the graph, so all
 configurations share a single code path and a single evaluation
 function.
-Two ablations are reported in Table~\ref{tab:braf_run}:
-\texttt{single\_pass\_llm} (the ``Single-prompt LLM'' row) and
-\texttt{no\_review}.
-The \texttt{no\_review} result is informative beyond its quality
-metrics: the run terminated at 71~min with a context-window-exceeded
-error during the AnalystAgent's second code-execution cycle, revealing
-that the ReviewAgent's ``approve and END'' transition plays a second,
-unobvious role as a bound on message-history length
-(see Supplementary~\S S3 and \S S4~F7).
-The remaining three variants (\texttt{no\_literature},
-\texttt{no\_data}, \texttt{no\_code}) are scaffolded but not executed
-in this preliminary report; running the full four-variant sweep costs
-approximately eight hours and US\$10 per benchmark case.
+Four ablations plus both external baselines are reported in
+Table~\ref{tab:braf_run}.
+Three of the four BioAgent ablation variants produced informative
+failure modes rather than quality degradations:
+
+\begin{itemize}
+  \item \texttt{no\_review} terminated at 71~min with a context-window-
+        exceeded error, revealing that the ReviewAgent's ``approve and
+        END'' transition doubles as an implicit bound on message-history
+        length (Supplementary~\S S3.2.2).
+  \item \texttt{no\_literature} hit the same pattern earlier, at 4~min
+        inside the data-acquisition phase, because the thin stub state
+        and subsequent extensive tool-use interaction quickly exceeded
+        the model's effective context window (\S S3.2.4).
+  \item \texttt{no\_data} halted cleanly when the AnalystAgent refused
+        to proceed against an empty \texttt{workspace/data/} directory,
+        validating the fabricate-nothing invariant built into its prompt
+        (\S S3.2.3).
+\end{itemize}
+
+Only the full system reaches the writing phase with non-empty IMRAD
+sections and the figure-generation phase with $>0$ figures.
+The \texttt{no\_code} variant returned an API-overloaded error before
+completing and is queued for retry (\S S3.2.5).
 
 %% ─────────────────────────────────────────────────────────────────────────────
 \section{Discussion}
