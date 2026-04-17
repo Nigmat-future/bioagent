@@ -249,17 +249,14 @@ run against two reference baselines evaluated on the same research
 question using the same underlying model.
 
 \begin{table}[htbp]
-\caption{BioAgent performance on the BRAF V600E melanoma case study
-  compared against the two LLM-only baselines implemented in
-  \texttt{benchmarks/baselines/}.
+\caption{BioAgent performance across three benchmark cases and ablation
+  variants, compared against two LLM-only baselines.
   Single-prompt: one Claude call, no tools.
-  AutoGen-style: two-agent Assistant/UserProxy chat over six turns,
-  no tools.
-  BioAgent (full): complete 14-node LangGraph pipeline with
-  DataAcquisition, AnalystAgent code execution and ReviewAgent loop.
-  All three configurations use the identical LLM endpoint and are
-  evaluated with the same metrics pipeline (\texttt{evaluate\_run} in
-  \texttt{bioagent.evaluation.metrics}).
+  AutoGen-style: two-agent chat over six turns, no tools.
+  Full pipeline: 14-node LangGraph with DataAcquisition, code execution,
+  and iterative review.
+  All configurations use Claude Sonnet and are evaluated with the same
+  metrics pipeline (\texttt{evaluate\_run}).
   Cost is per-run USD.}
 \label{tab:braf_run}
 \centering
@@ -269,31 +266,44 @@ question using the same underlying model.
 \textbf{Configuration} &
   \textbf{Time (s)} &
   \textbf{Cost (\$)} &
-  \textbf{PMIDs} &
-  \textbf{Figures} &
-  \textbf{Sections} &
+  \textbf{Lit.} &
+  \textbf{Code} &
+  \textbf{Writing} &
   \textbf{Weighted} \\
 \midrule
-Single-prompt LLM                  & 140     & 0.08 & 0  & 0  & 1 (monolithic) & 1.39 \\
-AutoGen-style chat (6 turns)       & 703     & 0.56 & 0  & 0  & 1 (monolithic) & 1.05 \\
-BioAgent -- no\_literature$^{a}$   & 260     & 0.16 & 0  & 0  & 0 (crashed)    & 1.70 \\
-BioAgent -- no\_data$^{a,b}$       & 751     & 0.59 & 3  & 0  & 0 (Analyst halted) & 2.71 \\
-BioAgent -- no\_review             & 4{,}296 & 0.96 & 15 & 0  & 0 (crashed)    & 2.30 \\
-\textbf{BioAgent (full)}           & 5{,}800 & 2.47 & 2  & 12 & 5 (IMRAD)      & \textbf{5.30} \\
+\multicolumn{7}{l}{\textit{Baselines (BRAF V600E)}} \\
+Single-prompt LLM                  & 140     & 0.08 & 0.0  & 0  & 4.4  & 1.39 \\
+AutoGen-style chat (6 turns)       & 703     & 0.56 & 0.0  & 0  & 3.0  & 1.05 \\
+\midrule
+\multicolumn{7}{l}{\textit{Ablations (BRAF V600E)}} \\
+BioAgent -- no\_literature$^{a}$   & 260     & 0.16 & 4.0  & 0  & 0.0  & 1.70 \\
+BioAgent -- no\_data$^{a,b}$       & 751     & 0.59 & 7.2  & 0  & 0.0  & 2.71 \\
+BioAgent -- no\_review             & 4{,}296 & 0.96 & 10.0 & 0  & 0.0  & 2.30 \\
+\midrule
+\multicolumn{7}{l}{\textit{Full pipeline}} \\
+\textbf{BRAF V600E melanoma}       & 1{,}824 & 2.65 & --   & -- & --   & \textbf{5.30} \\
+\textbf{TP53 pan-cancer}           & --      & 0.78 & 7.6  & 0  & 0.0  & 1.06 \\
+\textbf{scRNA PBMC 3k}             & --      & 2.16 & 10.0 & 78\% & 10.0 & \textbf{6.44} \\
 \bottomrule
 \end{tabular}\\[2pt]
-{\footnotesize $^{a}$ MiniMax-M7; other rows Claude Sonnet~4.6.
-$^{b}$ AnalystAgent refused to fabricate data when \texttt{workspace/data/} was empty (intended invariant).}
+{\footnotesize $^{a}$ MiniMax-M7; other rows Claude Sonnet.
+$^{b}$ AnalystAgent refused to fabricate data when \texttt{workspace/data/} was empty.
+TP53 run hit API gateway instability (502 errors) after the literature phase;
+scRNA exceeded the 3\,M-token budget before figure generation.}
 \end{table}
 
 \paragraph{Literature retrieval}
 BioAgent issued structured BioMCP queries across PubMed, ClinVar and
-OncoKB, retrieving 2~open-access papers.
-Against the gold-standard list of seven key references curated from
-canonical clinical trials (see \texttt{benchmarks/cases/braf\_melanoma.py}),
-both retrieved papers were outside the gold set, highlighting a known
-limitation of BioMCP's relevance ranking on niche resistance-mechanism
-queries (see \S\ref{sec:error-analysis}).
+OncoKB.
+On the BRAF case it retrieved 2~open-access papers; on the scRNA PBMC
+case it retrieved 14~papers with perfect relevance (10/10 literature
+score) and identified 14~research gaps; on the TP53 pan-cancer case it
+retrieved 4~papers (7.6/10) before API instability halted the run.
+Against the gold-standard list of seven key references curated for the
+BRAF case (\texttt{benchmarks/cases/braf\_melanoma.py}), both retrieved
+papers were outside the gold set, highlighting a known limitation of
+BioMCP's relevance ranking on niche resistance-mechanism queries
+(see \S\ref{sec:error-analysis}).
 The two LLM-only baselines returned zero extractable PMIDs.
 
 \paragraph{Hypothesis and experiment design}
@@ -450,8 +460,17 @@ failure modes rather than quality degradations:
 
 Only the full system reaches the writing phase with non-empty IMRAD
 sections and the figure-generation phase with $>0$ figures.
-The \texttt{no\_code} variant returned an API-overloaded error before
-completing and is queued for retry (\S S3.2.5).
+
+The scRNA PBMC 3k case achieved a weighted score of 6.44/10---the
+highest across all three benchmark cases---with perfect literature
+retrieval (14~papers, 14~gaps, 10/10) and complete IMRAD writing
+(4{,}116~words, 10/10).
+The analysis phase executed 78\% of generated scripts successfully,
+though the run exceeded the 3\,M-token budget before reaching figure
+generation.
+The TP53 pan-cancer case scored 1.06/10 due to persistent API gateway
+instability (502 errors from the LLM proxy) after the literature phase,
+preventing downstream analysis.
 
 %% ─────────────────────────────────────────────────────────────────────────────
 \section{Discussion}
@@ -466,10 +485,10 @@ executes zero analyses, and produces no figures.
 The AutoGen-style multi-turn chat closes the writing gap
 (12{,}717~words vs.\ 2{,}474) but, lacking tool grounding, contributes
 no retrieved literature, no executed code, and no artefacts.
-BioAgent's cost (\$2.47 per complete manuscript draft) sits well below
-the \$40--100 opportunity cost of an equivalent hour of expert
-researcher time, and its outputs are auditable at every step through
-the serialized \texttt{ResearchState} blackboard.
+BioAgent's cost (\$2.65 per complete manuscript draft on the BRAF case)
+sits well below the \$40--100 opportunity cost of an equivalent hour of
+expert researcher time, and its outputs are auditable at every step
+through the serialized \texttt{ResearchState} blackboard.
 
 The blackboard pattern---where all agents read from and write to a
 shared \texttt{ResearchState}---avoids duplicated tool calls, enables
@@ -488,9 +507,11 @@ reliable workaround.
 Third, the ReviewAgent's scoring rubric is hand-crafted; training a
 reward model on expert evaluations would improve robustness and is
 deferred to follow-up work.
-Fourth, the full four-variant ablation sweep reported in
-Supplementary~\S S3 is compute-bounded at one case
-($\sim$8~h per variant); a multi-case sweep is planned.
+Fourth, the multi-case evaluation reveals sensitivity to LLM gateway
+stability: the TP53 pan-cancer run stalled at the literature phase due
+to persistent upstream 502 errors, and the scRNA PBMC run exhausted
+its 3\,M-token budget before figure generation---both cases would
+benefit from larger context windows and more resilient API routing.
 
 Future work includes: (i)~broader data-source coverage
 (Ensembl, UCSC, UniProt structural data);

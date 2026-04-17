@@ -51,9 +51,9 @@ def get_anthropic_client():
     # If the key looks like it came from ANTHROPIC_AUTH_TOKEN (Claude Code)
     # or the gateway is known to require Bearer auth, pass as auth_token.
     # Otherwise use the standard api_key (x-api-key) header.
-    _BEFORE_GATEWAYS = {"https://ai-in.one"}
+    _BEARER_GATEWAYS = {"https://ai-in.one", "https://api.qingyuntop.top"}
     auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
-    if (auth_token and key == auth_token) or (base_url in _BEFORE_GATEWAYS):
+    if (auth_token and key == auth_token) or (base_url in _BEARER_GATEWAYS):
         kwargs: dict = {"auth_token": key}
     else:
         kwargs = {"api_key": key}
