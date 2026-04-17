@@ -41,17 +41,64 @@ ALL_VARIANTS = [
 ]
 
 
-def _passthrough_factory(phase: str) -> Callable:
-    """Build a node function that returns an empty update, advancing the graph."""
+def _passthrough_factory(phase: str, stub_state: dict | None = None) -> Callable:
+    """Build a node function that fakes the ablated phase's outputs.
+
+    The orchestrator routes by looking at what state fields are populated
+    (e.g. empty ``papers`` -> route to literature_review). If an ablated
+    node simply returns an empty update, the orchestrator will route right
+    back to it, producing an infinite loop. To break that cycle while still
+    reflecting the ablation in the evaluation metrics, we populate minimal
+    ``stub_state`` marking the phase as done but empty.
+    """
 
     def _node(state):  # type: ignore[no-untyped-def]
         logger.info("[ablation] Skipping '%s' (ablated)", phase)
-        return {
+        update = {
             "current_phase": phase,
             "phase_history": state.get("phase_history", []) + [f"{phase}:ablated"],
         }
+        if stub_state:
+            update.update(stub_state)
+        return update
 
     return _node
+
+
+# For each ablated phase, the minimum state required so the orchestrator
+# progresses past the phase's gate without routing back to it. Keep values
+# empty / sentinel so the evaluation metrics still reflect the ablation.
+_ABLATION_STUBS: dict[str, dict] = {
+    "literature_review": {
+        # Rule 1: empty papers -> literature_review. Populate with a sentinel
+        # paper so the orchestrator moves on to gap_analysis.
+        "papers": [{"id": "ABLATED", "title": "[LITERATURE AGENT ABLATED]"}],
+        "literature_summary": "[ablated: LiteratureAgent was disabled]",
+        "research_gaps": ["[ablated: no gaps identified because LiteratureAgent was disabled]"],
+    },
+    "data_acquisition": {
+        # Rule 5: null data_status -> data_acquisition. Mark as failed so
+        # the orchestrator routes to code_execution (rule 6/7).
+        "data_status": {"status": "partial", "datasets_requested": 0,
+                        "datasets_acquired": 0, "summary": "[ablated]"},
+    },
+    "code_execution": {
+        # code_execution goes to result_validation which routes back to
+        # orchestrator. Stub results so the orchestrator moves to writing.
+        "execution_results": [{"stdout": "[ablated]", "stderr": "", "exit_code": 0}],
+        "analysis_results": [{"summary": "[ablated: AnalystAgent was disabled]"}],
+        "validation_status": {"passed": True, "reason": "ablation passthrough"},
+    },
+    "result_validation": {
+        "validation_status": {"passed": True, "reason": "ablation passthrough"},
+    },
+    "review": {
+        # Review normally decides END vs revise. Without it, we force END
+        # by marking complete.
+        "current_phase": "complete",
+        "review_feedback": [{"score": 0, "recommendation": "[ablated: ReviewAgent was disabled]"}],
+    },
+}
 
 
 def _build_variant_graph(variant: str):
@@ -72,7 +119,8 @@ def _build_variant_graph(variant: str):
         for attr in ablations[variant]:
             original[attr] = getattr(_nodes, attr)
             phase_name = attr.replace("_node", "")
-            setattr(_nodes, attr, _passthrough_factory(phase_name))
+            stub = _ABLATION_STUBS.get(phase_name)
+            setattr(_nodes, attr, _passthrough_factory(phase_name, stub))
 
     try:
         graph = build_research_graph().compile()
