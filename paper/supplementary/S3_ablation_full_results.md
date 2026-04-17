@@ -21,20 +21,26 @@ For the v0.2.0 release, the following variants were executed end-to-end on the B
 
 ### S3.2.1 Executed
 
-| Variant | Time (s) | Cost ($) | PMIDs | Figures | Review score | Weighted |
-|---|---:|---:|---:|---:|---:|---:|
-| `full` (reference) | 5,800 | 2.47 | 2 | 12 | 5 | 5.3 |
-| `single_pass_llm` (= single-prompt) | 140 | 0.08 | 0 | 0 | N/A | 1.39 |
-| AutoGen-style chat (6 turns) | 703 | 0.56 | 0 | 0 | N/A | 1.05 |
+| Variant | Time (s) | Cost ($) | PMIDs | Code artefacts | Figures | Writing sections | Weighted |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `full` (reference) | 5,800 | 2.47 | 2 | 4 | 12 | 5 | 5.3 |
+| `no_review` | 4,296 | 0.96 | 15 | 0 | 0 | 0 | 2.3 |
+| `single_pass_llm` (= single-prompt) | 140 | 0.08 | 0 | 0 | 0 | 1 (monolith) | 1.39 |
+| AutoGen-style chat (6 turns) | 703 | 0.56 | 0 | 0 | 0 | 1 (monolith) | 1.05 |
 
-Executed with `BIOAGENT_RANDOM_SEED=42`, `claude-sonnet-4-6` endpoint via glm-5.1 gateway.
+Executed with `BIOAGENT_RANDOM_SEED=42`, `claude-sonnet-4-6` endpoint via the glm-5.1 gateway.
 
-### S3.2.2 Pending (scaffolded but not yet executed)
+### S3.2.2 Notable finding: `no_review` terminates abnormally
+
+The `no_review` run retrieved 15 PMIDs (more than the full system's 2 — the orchestrator re-routed to literature review more aggressively because nothing gated the exit) but never reached the writing or figure-generation phases. At wall-time 4,296 s the run raised `invalid_request_error: context window exceeds limit` mid-AnalystAgent and exited with 0 writing sections and 0 figures.
+
+**Interpretation.** The review gate plays a second, non-obvious role beyond quality control: its "approve and END" transition bounds the total message-history length. Ablating it allows the orchestrator to cycle through phases indefinitely, accumulating tool-use messages until the conversation window overflows. This is a useful diagnostic — it shows that `no_review` fails for a reason orthogonal to review quality, and motivates adding an explicit message-history compaction step as future work.
+
+### S3.2.3 Pending (scaffolded but not yet executed)
 
 - `no_literature` — expected behaviour: hypothesis quality drops because the PlannerAgent loses its literature-grounding input; novelty claims become unverifiable. Hypothesis score expected to fall from ~7.5 to ~3.
 - `no_data` — expected behaviour: AnalystAgent still produces code but executes it on templated inputs; analysis score unchanged but biological grounding lost. Reviewer comment expected: "results rely on synthetic data".
 - `no_code` — expected behaviour: Results section becomes narrative-only; writing completeness unchanged but analysis score = 0.
-- `no_review` — expected behaviour: faster (no 48-min review step); lower final writing quality. Writing score expected to fall ~20% with the revision loop removed.
 
 A command to reproduce the full ablation sweep:
 

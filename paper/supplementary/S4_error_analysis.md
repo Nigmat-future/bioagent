@@ -71,7 +71,17 @@ We recommend the first or second option for final manuscripts and the third only
 
 **Mitigation.** Selection logic in `bioagent/agents/planner.py` now uses `novelty + 1.5 * testability` rather than the sum, biasing toward actionable hypotheses. Post-fix, 0 observed selections with testability < 5.
 
-### F7. Windows-specific subprocess encoding errors
+### F7. Context-window overflow without review-loop gating
+
+**Symptom.** When the ReviewAgent is ablated (see S3), the orchestrator cycles through phases without a terminal exit path. Tool-use messages accumulate in the conversation history until the Anthropic endpoint returns `invalid_request_error: context window exceeds limit`.
+
+**Observed in.** The `no_review` ablation run for BRAF melanoma (S3.2.2) — crashed at wall-time 4,296 s during the AnalystAgent's second code-execution cycle, after 30 tool calls had accumulated in the message history.
+
+**Incidence.** 0% of non-ablated runs; 100% of `no_review` runs beyond 60 minutes on current models.
+
+**Mitigation.** Keep the ReviewAgent enabled (its cost-of-inclusion is modest relative to the catastrophic alternative). A planned enhancement is an explicit message-history compaction step triggered when conversation length exceeds 80% of the model window.
+
+### F8. Windows-specific subprocess encoding errors
 
 **Symptom.** `UnicodeDecodeError` when AnalystAgent subprocess output contains non-ASCII characters on Windows systems with GBK default encoding.
 
@@ -87,7 +97,8 @@ We recommend the first or second option for final manuscripts and the third only
 | F4 | Moderate | No | Raise budget or lower threshold |
 | F5 | Low | Partially | Manual caption review |
 | F6 | Low | Yes (selection heuristic) | — |
-| F7 | None (resolved) | Yes | — |
+| F7 | High (in ablated config only) | No | Re-enable ReviewAgent, or wait for message-compaction feature |
+| F8 | None (resolved) | Yes | — |
 
 ## S4.3 What Is *Not* Automatically Recoverable
 
