@@ -43,26 +43,29 @@ COLORS = {
 # ── Figure 1: LangGraph Workflow Architecture ─────────────────────────────────
 
 def fig1_architecture():
-    fig, ax = plt.subplots(figsize=(14, 9))
-    ax.set_xlim(0, 14)
-    ax.set_ylim(0, 9)
+    fig, ax = plt.subplots(figsize=(15, 9.5))
+    ax.set_xlim(0, 15)
+    ax.set_ylim(0, 9.5)
     ax.axis("off")
     ax.set_facecolor("#F8F9FA")
     fig.patch.set_facecolor("#F8F9FA")
 
     # Node definitions: (x_center, y_center, label, color)
+    # Execution flow: top row (research setup) -> middle row (data + code)
+    #                 -> bottom row (writing + review + exit)
     nodes = [
-        (2.0, 7.5, "Literature\nReview",    COLORS["blue"]),
-        (2.0, 6.0, "Gap\nAnalysis",         COLORS["sky"]),
-        (2.0, 4.5, "Hypothesis\nGeneration",COLORS["green"]),
-        (5.0, 4.5, "Experiment\nDesign",    COLORS["orange"]),
-        (8.0, 4.5, "Code\nExecution",       COLORS["red"]),
-        (8.0, 6.0, "Result\nValidation",    COLORS["pink"]),
-        (5.0, 6.0, "Iteration",             COLORS["gray"]),
-        (5.0, 7.5, "Writing",               COLORS["blue"]),
-        (8.0, 7.5, "Figure\nGeneration",    COLORS["orange"]),
-        (11.0, 7.5, "Review",              COLORS["green"]),
-        (11.0, 6.0, "Complete\n(Export)",  COLORS["black"]),
+        (2.0, 8.0, "Literature\nReview",    COLORS["blue"]),
+        (2.0, 6.5, "Gap\nAnalysis",         COLORS["sky"]),
+        (2.0, 5.0, "Hypothesis\nGeneration",COLORS["green"]),
+        (5.0, 5.0, "Experiment\nDesign",    COLORS["orange"]),
+        (8.0, 5.0, "Data\nAcquisition",     COLORS["yellow"]),
+        (11.0, 5.0, "Code\nExecution",      COLORS["red"]),
+        (11.0, 6.5, "Result\nValidation",   COLORS["pink"]),
+        (8.0, 6.5, "Iteration",             COLORS["gray"]),
+        (5.0, 8.0, "Writing",               COLORS["blue"]),
+        (8.0, 8.0, "Figure\nGeneration",    COLORS["orange"]),
+        (11.0, 8.0, "Review",               COLORS["green"]),
+        (13.3, 6.5, "Complete\n(Export)",   COLORS["black"]),
     ]
 
     node_coords = {}
@@ -87,15 +90,16 @@ def fig1_architecture():
         ("Literature Review", "Gap Analysis"),
         ("Gap Analysis", "Hypothesis Generation"),
         ("Hypothesis Generation", "Experiment Design"),
-        ("Experiment Design", "Code Execution"),
+        ("Experiment Design", "Data Acquisition"),  # new: data before code
+        ("Data Acquisition", "Code Execution"),
         ("Code Execution", "Result Validation"),
         ("Result Validation", "Iteration"),
-        ("Iteration", "Experiment Design"),
+        ("Iteration", "Code Execution"),           # iteration retries code only
         ("Result Validation", "Writing"),
         ("Writing", "Figure Generation"),
         ("Figure Generation", "Review"),
         ("Review", "Complete (Export)"),
-        ("Review", "Writing"),       # revision loop
+        ("Review", "Writing"),                      # revision loop
     ]
 
     def arrow(ax, x1, y1, x2, y2, color="#555555", curved=False):
@@ -119,7 +123,7 @@ def fig1_architecture():
 
     # Orchestrator box (background)
     orch = mpatches.FancyBboxPatch(
-        (0.2, 3.6), 13.6, 5.0,
+        (0.2, 4.1), 14.6, 5.0,
         boxstyle="round,pad=0.1",
         linewidth=2,
         edgecolor=COLORS["blue"],
@@ -128,12 +132,12 @@ def fig1_architecture():
         zorder=1,
     )
     ax.add_patch(orch)
-    ax.text(0.5, 8.4, "OrchestratorAgent (LangGraph StateGraph)", fontsize=9,
-            color=COLORS["blue"], fontstyle="italic")
+    ax.text(0.5, 8.85, "OrchestratorAgent (LangGraph StateGraph, 14 nodes)",
+            fontsize=9, color=COLORS["blue"], fontstyle="italic")
 
     # Shared state box (bottom)
     state_box = mpatches.FancyBboxPatch(
-        (0.5, 0.3), 13.0, 1.4,
+        (0.5, 0.3), 14.0, 1.7,
         boxstyle="round,pad=0.1",
         linewidth=1.5,
         edgecolor=COLORS["gray"],
@@ -141,12 +145,16 @@ def fig1_architecture():
         zorder=1,
     )
     ax.add_patch(state_box)
-    ax.text(7.0, 1.05, "Shared ResearchState (Blackboard)  —  30+ fields  —  "
-            "SQLite checkpoint", ha="center", va="center", fontsize=9,
-            color="#333333")
-    ax.text(7.0, 0.62, "papers · hypotheses · analysis_results · paper_sections · "
-            "figures · references · token_usage",
+    ax.text(7.5, 1.55, "Shared ResearchState (Blackboard)  —  33 typed fields  —  "
+            "SQLite checkpoint",
+            ha="center", va="center", fontsize=9, color="#333333")
+    ax.text(7.5, 1.05, "papers · data_artifacts · hypotheses · execution_results · "
+            "paper_sections · figures · references · review_feedback",
             ha="center", va="center", fontsize=7.5, color="#555555")
+    ax.text(7.5, 0.62, "dedup_add reducers apply content-hashed updates · "
+            "provenance trail via record_provenance()",
+            ha="center", va="center", fontsize=7, color="#777777",
+            fontstyle="italic")
 
     ax.set_title("Figure 1: BioAgent LangGraph Workflow Architecture",
                  fontsize=12, fontweight="bold", pad=8)

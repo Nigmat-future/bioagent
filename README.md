@@ -14,52 +14,68 @@ BioAgent is an autonomous research system that conducts **end-to-end bioinformat
 ```
                     ┌─────────────────────────────────────────────────┐
                     │                  ResearchState                  │
-                    │  (papers, hypotheses, results, paper_sections)  │
+                    │  (papers, data_artifacts, hypotheses, results,  │
+                    │   paper_sections, figures, review_feedback, …)  │
                     └─────────────────┬───────────────────────────────┘
-                                      │
+                                      │ shared by every agent (blackboard)
                                ┌──────▼──────┐
                     ┌──────────│ Orchestrator │◄──────────────────────┐
                     │          │    Agent     │                       │
                     │          └──────┬───────┘                       │
                     │                 │ routes to next phase           │
-             ┌──────┘    ┌────────────┼────────────┐                  │
-             │           │            │            │                  │
-    ┌────────▼───┐ ┌─────▼────┐ ┌────▼─────┐ ┌───▼──────┐           │
-    │ Literature │ │  Planner  │ │ Analyst  │ │  Writer  │           │
-    │   Agent    │ │  Agent    │ │  Agent   │ │  Agent   │           │
-    │ BioMCP+ArX │ │Hypotheses │ │ Code Gen │ │  Paper   │           │
-    │ 10 tools   │ │+Exp.Plan  │ │+Sandbox  │ │Sections  │           │
-    └────────────┘ └──────────┘ └────┬─────┘ └──────────┘           │
-                                     │                               │
-                               ┌─────▼─────┐   ┌─────────────┐      │
-                               │ Validator │   │Visualization│      │
-                               │  (rules)  │   │    Agent    │      │
-                               └─────┬─────┘   │ Nature figs │      │
-                                     │         └─────────────┘      │
-                               ┌─────▼─────┐          │             │
-                               │  Reviewer │◄─────────┘             │
-                               │ (score≥7) │────────────────────────┘
-                               └─────┬─────┘
-                                     │ pass
-                               ┌─────▼─────┐
-                               │  Export   │
-                               │ MD + LaTeX│
-                               └───────────┘
+    ┌──────┬──────┬─┴──────┬────────┬─────────┬──────────┬──────────┐ │
+    ▼      ▼      ▼        ▼        ▼         ▼          ▼          ▼ │
+┌──────┐┌─────┐┌──────┐┌───────┐┌────────┐┌────────┐┌─────────┐┌──────┐│
+│ Lit  ││ Gap ││Planr.││ Exp.  ││ Data   ││Analyst ││ Writer  ││Figure││
+│Agent ││Anal.││Agent ││Design ││Acquir. ││Agent   ││ Agent   ││Agent ││
+│BioMCP││ LLM ││Hyp+  ││  LLM  ││TCGA/GEO││PyCode +││ IMRAD   ││Nature││
+│+ArXiv││     ││rubric││       ││cBio/GDC││sandbox ││sections ││theme ││
+│      ││     ││      ││       ││ENCODE  ││+ retry ││ + cites ││+ DPI ││
+└──────┘└─────┘└──────┘└───────┘└────────┘└───┬────┘└─────────┘└──────┘│
+                                              │ exit 0?               │
+                                       ┌──────▼──────┐                │
+                                       │ Validation  │─── retry ──┐   │
+                                       │ (rules)     │            │   │
+                                       └──────┬──────┘            │   │
+                                              ▼                   │   │
+                                       ┌─────────────┐            │   │
+                                       │ Iteration   │────────────┘   │
+                                       │ (debug loop)│                │
+                                       └─────────────┘                │
+                                                                      │
+                                             ┌────────────────────────┘
+                                      ┌──────▼──────┐
+                                      │  Reviewer   │  score ≥ 7 → END
+                                      │   Agent     │──────────────────┐
+                                      │ (5 dims)    │◄── revise ──┐    │
+                                      └─────────────┘             │    │
+                                              │ < 7, round < 3    │    │
+                                              └───────────────────┘    │
+                                                                       ▼
+                                                                ┌────────────┐
+                                                                │ Export MD  │
+                                                                │ + LaTeX    │
+                                                                │ + BibTeX   │
+                                                                └────────────┘
 ```
+
+**14-node LangGraph StateGraph** with a conditional orchestrator, a code-execution retry loop, and a review revision loop (max 3 rounds). An optional `human_approval` node sits between the orchestrator and every phase when `BIOAGENT_HUMAN_IN_LOOP=true` for interactive gating.
 
 ## Key Features
 
 | Agent | Tools | Capability |
 |-------|-------|------------|
-| **OrchestratorAgent** | — | LLM-directed phase routing |
+| **OrchestratorAgent** | — | LLM-directed phase routing (12 valid phases) |
 | **LiteratureAgent** | BioMCP (PubMed/ClinicalTrials/ClinVar/gnomAD/OncoKB/Reactome/KEGG/UniProt/GWAS) + ArXiv | Systematic literature review |
 | **PlannerAgent** | BioMCP biological context | Hypothesis generation + experiment design |
-| **AnalystAgent** | Python sandbox + 8 bioinformatics templates (scRNA-seq/DE/GWAS/survival) | Code generation + execution |
-| **WriterAgent** | — | Publication-quality paper sections |
-| **VisualizationAgent** | Python sandbox + Nature matplotlib theme | Publication figures (300 DPI, Okabe-Ito colors) |
+| **DataAcquisitionAgent** ★ | 9 tools: GEO / cBioPortal / GDC-TCGA / NCBI E-utilities / ENCODE / direct URL + manual-instructions fallback | Real dataset download with 3-tier fallback hierarchy (never fabricates data) |
+| **AnalystAgent** | Python sandbox + 8 bioinformatics templates (scRNA-seq/DE/GWAS/survival) | Code generation + execution + debug loop |
+| **WriterAgent** | — | Publication-quality IMRAD paper sections with PMID citations |
+| **VisualizationAgent** | Python sandbox + Nature matplotlib theme | Publication figures (300 DPI, Okabe-Ito palette, colour-blind safe) |
+| **ReviewAgent** | — | 5-dimension self-review with revision loop gating |
 
 **Infrastructure:**
-- LangGraph StateGraph with 11 nodes, conditional routing, and iteration loops
+- LangGraph StateGraph with 14 nodes, conditional routing, iteration loops, and optional human-in-the-loop gating
 - Direct Anthropic SDK tool loop (no LangChain overhead)
 - SQLite checkpointing for session persistence and resume
 - Budget enforcement (token + cost limits)

@@ -113,7 +113,7 @@ def _biopython_fetch(acc_list: list, database: str, rettype: str, out_path, emai
     try:
         from Bio import Entrez  # type: ignore
 
-        Entrez.email = email
+        Entrez.email = email  # type: ignore[assignment]
 
         ids_str = ",".join(acc_list)
         handle = Entrez.efetch(db=database, id=ids_str, rettype=rettype, retmode="text")

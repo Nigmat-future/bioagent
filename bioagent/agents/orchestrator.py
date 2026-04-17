@@ -130,7 +130,7 @@ class OrchestratorAgent(BaseAgent):
             model=self.model,
             max_tokens=2048,  # needs room for thinking blocks + JSON text
             system=system_prompt,
-            messages=messages,
+            messages=messages,  # type: ignore[arg-type]
         )
 
         # Track token usage

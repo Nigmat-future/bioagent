@@ -154,8 +154,8 @@ def _call_with_retry(
                 model=model,
                 max_tokens=max_tokens,
                 system=system_prompt,
-                messages=conversation,
-                tools=tools if tools else [],
+                messages=conversation,  # type: ignore[arg-type]
+                tools=tools if tools else [],  # type: ignore[arg-type]
             )
         except _RETRYABLE_ERRORS as exc:
             last_exc = exc

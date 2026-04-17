@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import urllib.parse
 import urllib.request
 
 logger = logging.getLogger(__name__)
@@ -102,7 +103,7 @@ def _biomcp_study_list(query: str) -> str:
 def _api_search_studies(query: str) -> str:
     """Search cBioPortal REST API for studies."""
     try:
-        url = f"{_API_BASE}/studies?keyword={urllib.request.quote(query)}&pageSize=20"
+        url = f"{_API_BASE}/studies?keyword={urllib.parse.quote(query)}&pageSize=20"
         req = urllib.request.Request(url, headers={"Accept": "application/json"})
         with urllib.request.urlopen(req, timeout=30) as resp:
             studies = json.loads(resp.read().decode())

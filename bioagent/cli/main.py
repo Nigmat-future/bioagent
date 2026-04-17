@@ -361,14 +361,14 @@ def export(
 
     if format in ("md", "both"):
         try:
-            md_path = export_markdown(state, out)
+            md_path = export_markdown(state, out)  # type: ignore[arg-type]
             console.print(f"[green]✓[/green] Markdown: {md_path}")
         except Exception as exc:
             display_error(f"Markdown export failed: {exc}")
 
     if format in ("latex", "both"):
         try:
-            tex_path, bib_path = export_latex(state, out)
+            tex_path, bib_path = export_latex(state, out)  # type: ignore[arg-type]
             console.print(f"[green]✓[/green] LaTeX: {tex_path}")
             if bib_path:
                 console.print(f"[green]✓[/green] BibTeX: {bib_path}")

@@ -125,7 +125,7 @@ class LiteratureAgent(BaseAgent):
         if not research_gaps:
             research_gaps = ["Literature review completed — specific gaps to be refined in gap_analysis phase"]
 
-        updates = {
+        updates: dict[str, Any] = {
             "literature_summary": literature_summary,
             "research_gaps": research_gaps,
         }
