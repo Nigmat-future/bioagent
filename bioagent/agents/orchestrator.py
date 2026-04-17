@@ -119,6 +119,9 @@ class OrchestratorAgent(BaseAgent):
 
     def run(self, state: ResearchState) -> dict[str, Any]:
         """Single LLM call (no tool loop) to decide next phase."""
+        import random
+        import time
+
         from bioagent.llm.token_tracking import global_token_usage
 
         logger.info("[orchestrator] Deciding next phase...")
@@ -126,12 +129,37 @@ class OrchestratorAgent(BaseAgent):
         system_prompt = self.get_system_prompt(state)
         messages = self.build_messages(state)
 
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=2048,  # needs room for thinking blocks + JSON text
-            system=system_prompt,
-            messages=messages,  # type: ignore[arg-type]
-        )
+        # Retry on transient API errors (529 overloaded, 503, 502, 429).
+        # The orchestrator is on the critical path for every phase transition
+        # so a single transient here would kill the whole benchmark.
+        max_retries = 4
+        last_exc: Exception | None = None
+        response = None
+        for attempt in range(max_retries):
+            try:
+                response = self.client.messages.create(
+                    model=self.model,
+                    max_tokens=2048,
+                    system=system_prompt,
+                    messages=messages,  # type: ignore[arg-type]
+                )
+                break
+            except Exception as exc:
+                status = (
+                    getattr(exc, "status_code", None)
+                    or getattr(getattr(exc, "response", None), "status_code", None)
+                )
+                if status not in (429, 500, 502, 503, 529):
+                    raise
+                last_exc = exc
+                wait = (2 ** attempt) + random.uniform(0, 1)
+                logger.warning(
+                    "[orchestrator] %s (attempt %d/%d), retrying in %.1fs",
+                    exc, attempt + 1, max_retries, wait,
+                )
+                time.sleep(wait)
+        if response is None:
+            raise last_exc  # type: ignore[misc]
 
         # Track token usage
         if response.usage:
