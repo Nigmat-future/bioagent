@@ -1,0 +1,52 @@
+{
+  "research_topic": "TP53 tumor suppressor in pan-cancer genomics",
+  "weighted_score": 8.42,
+  "literature": {
+    "papers_found": 8,
+    "gaps_identified": 10,
+    "score": 9.2,
+    "precision": 0.0,
+    "recall": 0.0
+  },
+  "hypothesis": {
+    "generated": 3,
+    "selected": true,
+    "score": 6.0
+  },
+  "analysis": {
+    "code_artifacts": 1,
+    "execution_success_rate": 0.7543859649122807,
+    "figures_generated": 6,
+    "validation_passed": true,
+    "score": 7.68
+  },
+  "writing": {
+    "sections": [
+      "abstract",
+      "introduction",
+      "methods",
+      "results",
+      "discussion"
+    ],
+    "word_count": 4439,
+    "completeness": 1.0,
+    "score": 10.0
+  },
+  "figures": {
+    "count": 6,
+    "caption_coverage": 1.0,
+    "score": 10.0
+  },
+  "efficiency": {
+    "total_tokens": 3625905,
+    "estimated_cost_usd": 12.593859,
+    "review_score": 7,
+    "review_recommendation": "minor_revision",
+    "score": 7.0
+  },
+  "benchmark": {
+    "case": "tp53_pancancer",
+    "precision": 0.0,
+    "recall": 0.0
+  }
+}

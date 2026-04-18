@@ -37,19 +37,22 @@ def download_geo_dataset(accession: str, output_dir: str = "data") -> str:
     data_dir = settings.workspace_path / output_dir
     data_dir.mkdir(parents=True, exist_ok=True)
 
-    # ── Attempt 1: GEOparse ────────────────────────────────────────────────────
-    result = _download_via_geoparse(acc, data_dir)
+    # ── Attempt 1: EBI ArrayExpress mirror → NCBI FTP (resilient) ──────────────
+    # Mirror-first because EBI is typically faster from Asia and the
+    # resilient backbone handles retries/resume/gzip-integrity that the
+    # old single-shot FTP path lacked.
+    result = _download_via_mirrors(acc, data_dir)
     if result.startswith("SUCCESS"):
         return result
 
-    logger.warning("[geo_tools] GEOparse failed (%s), trying FTP fallback", result)
+    logger.warning("[geo_tools] Mirrors failed (%s), trying GEOparse", result)
 
-    # ── Attempt 2: Direct FTP ─────────────────────────────────────────────────
-    result2 = _download_via_ftp(acc, data_dir)
+    # ── Attempt 2: GEOparse (for platform/sample-level metadata) ───────────────
+    result2 = _download_via_geoparse(acc, data_dir)
     if result2.startswith("SUCCESS"):
         return result2
 
-    logger.warning("[geo_tools] FTP fallback failed (%s), generating instructions", result2)
+    logger.warning("[geo_tools] GEOparse failed (%s), generating instructions", result2)
 
     # ── Attempt 3: Manual instructions ────────────────────────────────────────
     from bioagent.tools.data.manual_instructions import generate_download_instructions
@@ -141,39 +144,58 @@ def _extract_expression_matrix(gse, acc: str, data_dir) -> "Path | None":
     return None
 
 
-def _download_via_ftp(acc: str, data_dir) -> str:
-    """Direct FTP/HTTPS download of series matrix file."""
+def _download_via_mirrors(acc: str, data_dir) -> str:
+    """Mirror-first series matrix download (EBI → NCBI), with retry/resume.
 
-    # Build NCBI FTP URL
-    prefix = acc[:-3] + "nnn" if len(acc) > 3 else acc
-    matrix_url = (
-        f"https://ftp.ncbi.nlm.nih.gov/geo/series/{prefix}/{acc}/matrix/"
-        f"{acc}_series_matrix.txt.gz"
-    )
+    Uses the resilient ``_http.try_mirrors`` backbone: EBI ArrayExpress
+    first (faster from Asia, 404-fails fast when series isn't mirrored),
+    then NCBI GEO FTP as fallback. Both go through tenacity retry and
+    Range-resume; gzip integrity is validated before rename.
+    """
+    from bioagent.tools.data._http import try_mirrors
+    from bioagent.tools.data.mirrors import resolve_geo_series_matrix
+
+    candidates = resolve_geo_series_matrix(acc)
+    if not candidates:
+        return f"ERROR: No mirror candidates for {acc}"
+
     out_gz = data_dir / f"{acc}_series_matrix.txt.gz"
+    result = try_mirrors(candidates, out_gz, validate_gzip=True)
 
-    from bioagent.tools.data.url_download import download_url
-    result = download_url(
-        url=matrix_url,
-        filename=out_gz.name,
-        description=f"GEO series matrix for {acc}",
-    )
+    if not result.ok:
+        return (
+            f"ERROR: All mirrors failed for {acc} "
+            f"(last attempts={result.attempts}): {result.error}"
+        )
 
-    if not result.startswith("SUCCESS"):
-        return result
+    # Decompress the .gz we just saved
+    import gzip
+    import shutil
 
-    # The url_download tool auto-decompresses .gz → try to parse it
     matrix_txt = data_dir / f"{acc}_series_matrix.txt"
-    if matrix_txt.exists():
-        csv_path = _parse_series_matrix(matrix_txt, acc, data_dir)
-        if csv_path:
-            size_mb = csv_path.stat().st_size / 1_048_576
-            return (
-                f"SUCCESS: Downloaded {acc} via FTP. "
-                f"Expression CSV: {csv_path} ({size_mb:.1f} MB)"
-            )
+    try:
+        with gzip.open(out_gz, "rb") as f_in, open(matrix_txt, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
+        out_gz.unlink()
+    except Exception as exc:
+        return (
+            f"SUCCESS (downloaded): {out_gz} via {result.source} "
+            f"(gunzip failed: {exc})"
+        )
 
-    return result
+    csv_path = _parse_series_matrix(matrix_txt, acc, data_dir)
+    if csv_path:
+        size_mb = csv_path.stat().st_size / 1_048_576
+        return (
+            f"SUCCESS: Downloaded {acc} via {result.source} "
+            f"(attempts={result.attempts}, resumed={result.resumed}). "
+            f"Expression CSV: {csv_path} ({size_mb:.1f} MB)"
+        )
+
+    return (
+        f"SUCCESS: Downloaded {acc} via {result.source} "
+        f"(attempts={result.attempts}). Series matrix: {matrix_txt}"
+    )
 
 
 def _parse_series_matrix(txt_path, acc: str, data_dir) -> "Path | None":

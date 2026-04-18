@@ -1,0 +1,26 @@
+{
+  "run_id": "cae881ec-475d-459d-88b1-284fbea7d252",
+  "model": "claude-sonnet-4-6-thinking",
+  "random_seed": 42,
+  "started_at": 1776502458.1864357,
+  "total_duration_seconds": 2684.41,
+  "python_version": "3.11.14 | packaged by Anaconda, Inc. | (main, Oct 21 2025, 18:30:03) [MSC v.1929 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.22631-SP0",
+  "git_commit": "3e81edb",
+  "package_versions": {
+    "anthropic": "0.86.0",
+    "langgraph": "1.0.5",
+    "numpy": "1.26.4",
+    "pandas": "3.0.1",
+    "matplotlib": "3.10.8",
+    "seaborn": "0.13.2",
+    "biopython": "1.85",
+    "pydantic": "2.12.5"
+  },
+  "phases": [],
+  "input_hash": "27ca8809fd4acd44",
+  "papers_hash": "40b6c1d75694c2d2",
+  "output_hash": "5dc305b0c198da8b",
+  "total_tokens": 3625905,
+  "estimated_cost_usd": 12.5939
+}

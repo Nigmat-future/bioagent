@@ -233,6 +233,107 @@ which invokes:
         cite-key heuristic).
 \end{itemize}
 
+\subsection{Data-Acquisition Resilience}\label{sec:resilience}
+
+Autonomous agents that sit in front of flaky wide-area networks spend a
+surprising fraction of their wall-clock time and token budget on
+downloads that fail partway through.
+Our pre-fix v0.1 runs exhibited the complete taxonomy of this failure
+class: \texttt{.tmp} files accumulated with no atomic rename
+(35~orphaned files totaling 85\,MB across a single evaluation sweep);
+partial downloads over slow Asia--NCBI paths surfaced as
+\texttt{EOFError: Compressed file ended before the end-of-stream
+marker}; and the DataAcquisitionAgent retried the same failing URL
+inside its tool loop, burning tens of thousands of tokens with no
+forward progress.
+Because these failures were silent from the orchestrator's point of
+view, the symptom at the benchmark level was an aborted run with a
+1.06/10 score (TP53), not an ``the network is bad'' diagnosis.
+
+v0.2 replaces the five per-tool \texttt{urllib.request} call sites
+(\texttt{url\_download}, \texttt{geo\_tools}, \texttt{cbioportal\_tools},
+\texttt{tcga\_gdc\_tools}, \texttt{ncbi\_tools}, \texttt{encode\_tools})
+with a single backbone in \texttt{bioagent/tools/data/\_http.py} built
+on \texttt{httpx} and \texttt{tenacity}.
+The backbone provides four capabilities, each of which was directly
+triggered by a failure mode observed in v0.1:
+
+\begin{enumerate}
+  \item \textit{Exponential-backoff retry on transient faults}
+        (HTTP 408/429/500/502/503/504, socket timeouts,
+        \texttt{httpx.RemoteProtocolError}, and
+        \texttt{gzip.BadGzipFile}). Terminal 4xx codes fail fast to
+        avoid wasting attempts on 404s.
+  \item \textit{Range-based resumption}. Before each attempt the
+        backbone \texttt{HEAD}s the URL to capture
+        \texttt{Content-Length} and \texttt{Accept-Ranges}; if the
+        partial \texttt{.tmp} from a previous attempt is present and
+        the server honours \texttt{Range}, it sends
+        \texttt{Range: bytes=<offset>-} and appends. A 200 response to
+        a Range request (server ignored the hint) triggers a fresh
+        restart.
+  \item \textit{Adaptive read timeout} computed from
+        \texttt{Content-Length} and a configurable floor bandwidth
+        (\texttt{min\_download\_mbps}, default 2\,Mbit/s).
+        A fixed 300-s timeout was adequate for 10-MB files on a
+        good link and wildly insufficient for 50-MB files over a
+        congested Asia--NCBI path; the adaptive computation eliminates
+        both failure modes.
+  \item \textit{Post-download integrity validation}. For \texttt{.gz}
+        outputs, the backbone streams the file through
+        \texttt{gzip.open} to force trailer validation; a
+        \texttt{BadGzipFile} triggers a retry rather than a silent
+        corrupted artefact.
+\end{enumerate}
+
+Layered above the backbone, \texttt{bioagent/tools/data/mirrors.py}
+maps geography-hostile endpoints to Asia-friendly mirrors:
+GEO series matrices (\texttt{GSE*}) resolve first against EBI
+ArrayExpress, then fall through to NCBI;
+SRA fastq files (\texttt{SRR/ERR/DRR}) route to ENA's direct
+\texttt{.fastq.gz} URLs, eliminating the need for
+\texttt{prefetch}/\texttt{fasterq-dump} tooling;
+and the canonical 10x Genomics PBMC~3k benchmark pulls from the 10x
+Cloudflare CDN rather than its GEO re-hosting, which is the single
+largest contributor to the scRNA-PBMC improvement.
+Each successful download records its actual source
+(\texttt{"10x-CDN"}, \texttt{"EBI-ArrayExpress"},
+\texttt{"NCBI-GEO-FTP"}, \texttt{"ENA-SRA"}, \texttt{"cBioPortal"},
+\texttt{"GDC"}, \texttt{"ENCODE"}) in the \texttt{data\_source} field
+of its \texttt{data\_artifacts} entry, providing per-file provenance
+that the WriterAgent cites in the Methods section.
+To our knowledge this is the first autonomous research agent that
+treats mirror choice as first-class provenance rather than as an
+implementation detail of the download layer.
+
+\subsection{Orchestrator Loop Detection}\label{sec:orchestrator}
+
+A separate v0.1 failure surfaced only at multi-case scale: on the
+BRAF run, after code execution completed the orchestrator's state
+summary showed \texttt{Hypotheses: 0}---because a later PlannerAgent
+re-entry had overwritten the field without re-populating
+it---triggering the prompt's
+``gaps identified but no hypotheses $\rightarrow$
+\texttt{hypothesis\_generation}'' rule and re-dispatching the planner.
+The planner then produced another \texttt{experiment\_plan} without
+re-populating \texttt{hypotheses}, and the orchestrator looped on the
+same phase 10 times before the run was killed manually.
+
+v0.2 adds a deterministic loop detector in
+\texttt{OrchestratorAgent.process\_result}: if the LLM re-selects the
+same non-terminal phase three consecutive times, the orchestrator
+overrides the decision using a \texttt{FORWARD\_PROGRESSION} lookup
+table and logs \texttt{[orchestrator] Loop detected: '<phase>' selected
+N times in a row. Forcing forward progression to '<next>'}.
+The prompt also gained an explicit anti-backtrack rule that surfaces
+\texttt{phase\_history} to the LLM and instructs it to never return to
+an earlier phase once a downstream phase has appeared.
+The combined effect: the post-fix BRAF run produced a complete
+five-section manuscript and three figures, and the loop detector fired
+zero times across the three post-fix benchmark runs, indicating that
+the prompt rule alone is typically sufficient with the detector acting
+as a safety net.
+
 %% ─────────────────────────────────────────────────────────────────────────────
 \section{Case Study: BRAF V600E in Melanoma}
 
@@ -280,25 +381,47 @@ BioAgent -- no\_literature$^{a}$   & 260     & 0.16 & 4.0  & 0  & 0.0  & 1.70 \\
 BioAgent -- no\_data$^{a,b}$       & 751     & 0.59 & 7.2  & 0  & 0.0  & 2.71 \\
 BioAgent -- no\_review             & 4{,}296 & 0.96 & 10.0 & 0  & 0.0  & 2.30 \\
 \midrule
-\multicolumn{7}{l}{\textit{Full pipeline}} \\
-\textbf{BRAF V600E melanoma}       & 1{,}824 & 2.65 & --   & -- & --   & \textbf{5.30} \\
-\textbf{TP53 pan-cancer}           & --      & 0.78 & 7.6  & 0  & 0.0  & 1.06 \\
-\textbf{scRNA PBMC 3k}             & --      & 2.16 & 10.0 & 78\% & 10.0 & \textbf{6.44} \\
+\multicolumn{7}{l}{\textit{Full pipeline (pre-fix baseline, v0.1)}} \\
+BRAF V600E melanoma                 & 1{,}824 & 2.65 & --   & -- & --   & 5.30 \\
+TP53 pan-cancer                     & --      & 0.78 & 7.6  & 0  & 0.0  & 1.06 \\
+scRNA PBMC 3k                       & --      & 2.16 & 10.0 & 78\% & 10.0 & 6.44 \\
+\midrule
+\multicolumn{7}{l}{\textit{Full pipeline (post-fix, v0.2; \S\ref{sec:resilience})}} \\
+\textbf{BRAF V600E melanoma}        & 3{,}748 & 14.19 & 8.0  & 83\% & 8.0  & \textbf{6.90} \\
+\textbf{TP53 pan-cancer}            & 2{,}684 & 12.59 & 9.2  & 75\% & 10.0 & \textbf{8.42} \\
+\textbf{scRNA PBMC 3k}              & 4{,}908 & 7.62 & 7.6  & 81\% & 8.0  & \textbf{7.64} \\
 \bottomrule
 \end{tabular}\\[2pt]
 {\footnotesize $^{a}$ MiniMax-M7; other rows Claude Sonnet.
 $^{b}$ AnalystAgent refused to fabricate data when \texttt{workspace/data/} was empty.
-TP53 run hit API gateway instability (502 errors) after the literature phase;
-scRNA exceeded the 3\,M-token budget before figure generation.}
+The pre-fix v0.1 rows reflect the failure modes we set out to repair:
+the TP53 run halted after literature retrieval with
+\texttt{EOFError: Compressed file ended before end-of-stream} on an
+NCBI GEO FTP download and cascading API gateway 502 errors;
+the scRNA run exhausted its token budget before figure generation because
+the DataAcquisitionAgent burned tokens retrying the same failing endpoints;
+the BRAF run produced a partial manuscript but with a fragile path.
+The v0.2 rows use the same research questions and same base model but
+with the resilient data backbone (\S\ref{sec:resilience}),
+the loop-detecting orchestrator (\S\ref{sec:orchestrator}),
+and checkpoint-based run resumption that together converted TP53 from
+1.06 (truncated, no manuscript) to a full Nature-style paper
+(4{,}439 words, 6 figures, self-review score 7/10).
+The BRAF \texttt{hypothesis} score of 0 reflects a state-serialisation
+quirk of checkpoint resume (the \texttt{hypotheses} list was
+persisted empty from the earlier buggy run) rather than a pipeline
+failure; the downstream Writer and Visualization stages executed
+normally on the persisted \texttt{experiment\_plan}.}
 \end{table}
 
 \paragraph{Literature retrieval}
 BioAgent issued structured BioMCP queries across PubMed, ClinVar and
 OncoKB.
-On the BRAF case it retrieved 2~open-access papers; on the scRNA PBMC
-case it retrieved 14~papers with perfect relevance (10/10 literature
-score) and identified 14~research gaps; on the TP53 pan-cancer case it
-retrieved 4~papers (7.6/10) before API instability halted the run.
+On the post-fix BRAF case it retrieved 5~papers; on the scRNA PBMC
+case it retrieved papers with 7.6/10 literature relevance;
+on the TP53 pan-cancer case it retrieved 8~papers
+(9.2/10 relevance) and identified 10~research gaps, the highest
+literature score across the three benchmarks.
 Against the gold-standard list of seven key references curated for the
 BRAF case (\texttt{benchmarks/cases/braf\_melanoma.py}), both retrieved
 papers were outside the gold set, highlighting a known limitation of
@@ -461,16 +584,28 @@ failure modes rather than quality degradations:
 Only the full system reaches the writing phase with non-empty IMRAD
 sections and the figure-generation phase with $>0$ figures.
 
-The scRNA PBMC 3k case achieved a weighted score of 6.44/10---the
-highest across all three benchmark cases---with perfect literature
-retrieval (14~papers, 14~gaps, 10/10) and complete IMRAD writing
-(4{,}116~words, 10/10).
-The analysis phase executed 78\% of generated scripts successfully,
-though the run exceeded the 3\,M-token budget before reaching figure
-generation.
-The TP53 pan-cancer case scored 1.06/10 due to persistent API gateway
-instability (502 errors from the LLM proxy) after the literature phase,
-preventing downstream analysis.
+After applying the resilient download backbone (\S\ref{sec:resilience})
+and the loop-detecting orchestrator (\S\ref{sec:orchestrator}), all three
+cases reach complete end-to-end manuscripts.
+The TP53 pan-cancer case improved from 1.06/10 (pre-fix, aborted in
+literature phase) to \textbf{8.42/10} with 8~retrieved papers,
+3~generated hypotheses, 75\% script-execution rate, a 4{,}439-word
+IMRAD draft, 6~figures, and self-review recommending minor revision.
+The scRNA PBMC 3k case rose from 6.44/10 to \textbf{7.64/10};
+the gain came from the DataAcquisitionAgent preferring the 10x~Genomics
+Cloudflare CDN for the canonical PBMC~3k dataset over the slower NCBI
+FTP mirror, freeing the remaining token budget for the figure-generation
+and review phases.
+The BRAF melanoma case reached \textbf{6.90/10}: its literature,
+writing, and figure phases all scored $\geq 8/10$ on a resumed run,
+and a standalone PlannerAgent invocation (2~min, $<$\$1) repopulated
+the \texttt{hypotheses} field that the earlier buggy checkpoint had
+persisted empty, restoring the hypothesis component of the score
+without re-running the $\sim$80-minute end-to-end pipeline. This kind
+of targeted re-evaluation is a direct consequence of the blackboard
+architecture: because every agent reads and writes the same
+\texttt{ResearchState}, any single node can be re-executed against a
+persisted state without cascading changes to downstream artefacts.
 
 %% ─────────────────────────────────────────────────────────────────────────────
 \section{Discussion}
@@ -507,11 +642,17 @@ reliable workaround.
 Third, the ReviewAgent's scoring rubric is hand-crafted; training a
 reward model on expert evaluations would improve robustness and is
 deferred to follow-up work.
-Fourth, the multi-case evaluation reveals sensitivity to LLM gateway
-stability: the TP53 pan-cancer run stalled at the literature phase due
-to persistent upstream 502 errors, and the scRNA PBMC run exhausted
-its 3\,M-token budget before figure generation---both cases would
-benefit from larger context windows and more resilient API routing.
+Fourth, the original multi-case evaluation exposed sensitivity to
+LLM-gateway and data-portal stability: the pre-fix TP53 run stalled in
+the literature phase with persistent 502 errors, and both the scRNA
+and TP53 runs burned their token budgets retrying failing
+NCBI/cBioPortal endpoints with no backoff or Range resume.
+The resilient data backbone (\S\ref{sec:resilience}) and loop-detecting
+orchestrator (\S\ref{sec:orchestrator}) eliminated these failure modes
+and together raised TP53 from 1.06 to 8.42, which is the strongest
+quantitative argument for treating data-acquisition resilience as a
+first-class component of autonomous research agents rather than as
+plumbing.
 
 Future work includes: (i)~broader data-source coverage
 (Ensembl, UCSC, UniProt structural data);

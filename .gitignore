@@ -13,8 +13,11 @@ __pycache__/
 
 # Runtime
 workspace/
+workspace_*/
 checkpoints/
 *.log
+.coverage
+.claude/
 
 # Distribution
 dist/

@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import urllib.parse
-import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -43,50 +41,39 @@ def search_encode_datasets(
     if target:
         params["target.label"] = target
 
+    from bioagent.tools.data._http import get_json
+
     url = f"{_ENCODE_API}/search/?" + urllib.parse.urlencode(params)
+    data, source = get_json(url, timeout=30.0, source_label="ENCODE")
+    if data is None:
+        return f"ERROR: ENCODE API unreachable — {source}"
 
-    try:
-        req = urllib.request.Request(
-            url,
-            headers={
-                "Accept": "application/json",
-                "User-Agent": "BioAgent/1.0",
-            },
+    experiments = data.get("@graph", [])
+    total = data.get("total", 0)
+
+    if not experiments:
+        return (
+            f"No ENCODE experiments found for assay={assay}, "
+            f"biosample={biosample}, target={target}"
         )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read().decode())
 
-        experiments = data.get("@graph", [])
-        total = data.get("total", 0)
-
-        if not experiments:
-            return (
-                f"No ENCODE experiments found for assay={assay}, "
-                f"biosample={biosample}, target={target}"
-            )
-
-        lines = [f"Found {total} ENCODE experiments (showing {len(experiments)}):\n"]
-        for exp in experiments:
-            acc = exp.get("accession", "?")
-            assay_t = exp.get("assay_title", "?")
-            bio = exp.get("biosample_ontology", {})
-            bio_name = bio.get("term_name", "?") if isinstance(bio, dict) else "?"
-            files = exp.get("files", [])
-            lines.append(
-                f"- {acc} | {assay_t} | {bio_name} | {len(files)} files"
-            )
-
+    lines = [f"Found {total} ENCODE experiments (showing {len(experiments)}):\n"]
+    for exp in experiments:
+        acc = exp.get("accession", "?")
+        assay_t = exp.get("assay_title", "?")
+        bio = exp.get("biosample_ontology", {})
+        bio_name = bio.get("term_name", "?") if isinstance(bio, dict) else "?"
+        files = exp.get("files", [])
         lines.append(
-            "\nTo download a file: download_encode_file(file_accession)"
-            "\nFile accessions start with 'ENCF...'"
-            "\nExperiment details: https://www.encodeproject.org/experiments/<ENCSR...>/"
+            f"- {acc} | {assay_t} | {bio_name} | {len(files)} files"
         )
-        return "\n".join(lines)
 
-    except urllib.error.URLError as exc:
-        return f"ERROR: ENCODE API unreachable — {exc.reason}"
-    except Exception as exc:
-        return f"ERROR: {exc}"
+    lines.append(
+        "\nTo download a file: download_encode_file(file_accession)"
+        "\nFile accessions start with 'ENCF...'"
+        "\nExperiment details: https://www.encodeproject.org/experiments/<ENCSR...>/"
+    )
+    return "\n".join(lines)
 
 
 def download_encode_file(file_accession: str) -> str:
@@ -156,15 +143,16 @@ def download_encode_file(file_accession: str) -> str:
 
 
 def _get_encode_file_metadata(file_accession: str) -> dict:
-    """Fetch metadata for an ENCODE file."""
-    try:
-        url = f"{_ENCODE_API}/files/{file_accession}/?format=json"
-        req = urllib.request.Request(
-            url,
-            headers={"Accept": "application/json", "User-Agent": "BioAgent/1.0"},
+    """Fetch metadata for an ENCODE file (with retry)."""
+    from bioagent.tools.data._http import get_json
+
+    url = f"{_ENCODE_API}/files/{file_accession}/?format=json"
+    data, source = get_json(url, timeout=15.0, source_label="ENCODE")
+    if data is None:
+        logger.warning(
+            "[encode_tools] Failed to get metadata for %s: %s",
+            file_accession,
+            source,
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            return json.loads(resp.read().decode())
-    except Exception as exc:
-        logger.warning("[encode_tools] Failed to get metadata for %s: %s", file_accession, exc)
         return {}
+    return data

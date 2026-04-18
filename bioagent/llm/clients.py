@@ -53,10 +53,17 @@ def get_anthropic_client():
     # Otherwise use the standard api_key (x-api-key) header.
     _BEARER_GATEWAYS = {"https://ai-in.one", "https://api.qingyuntop.top"}
     auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
-    if (auth_token and key == auth_token) or (base_url in _BEARER_GATEWAYS):
-        kwargs: dict = {"auth_token": key}
+    use_bearer = (auth_token and key == auth_token) or (base_url in _BEARER_GATEWAYS)
+
+    # CRITICAL: when only one auth mode is intended, explicitly set the other
+    # to an empty string to prevent the SDK from silently falling back to
+    # ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN env vars and sending *both*
+    # headers with mismatched values (which gateways like qingyuntop reject
+    # as 401).
+    if use_bearer:
+        kwargs: dict = {"auth_token": key, "api_key": ""}
     else:
-        kwargs = {"api_key": key}
+        kwargs = {"api_key": key, "auth_token": ""}
 
     kwargs["http_client"] = http_client
     if base_url:

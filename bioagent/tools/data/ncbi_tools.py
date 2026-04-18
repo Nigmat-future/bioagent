@@ -28,7 +28,6 @@ def download_ncbi_sequences(
     Returns a status string describing what was downloaded.
     """
     import urllib.parse
-    import urllib.request
 
     from bioagent.config.settings import settings
     from bioagent.tools.execution.sandbox import ensure_workspace
@@ -79,24 +78,31 @@ def download_ncbi_sequences(
 
     logger.warning("[ncbi_tools] BioPython failed (%s), trying direct HTTP", result)
 
-    # Raw HTTP fallback
-    try:
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": f"BioAgent/1.0 ({email})"},
-        )
-        with urllib.request.urlopen(req, timeout=settings.download_timeout) as resp:
-            content = resp.read()
+    # Resilient HTTP fallback (httpx + retry)
+    from bioagent.tools.data._http import stream_download
 
-        if len(content) < 20:
-            raise ValueError("Response too short — likely an NCBI error")
-
-        out_path.write_bytes(content)
+    result = stream_download(
+        url,
+        out_path,
+        source_label="NCBI-Entrez",
+        validate_gzip=False,
+    )
+    if result.ok and out_path.stat().st_size >= 20:
         size_kb = out_path.stat().st_size / 1024
-        return f"SUCCESS: Downloaded {ids_str} from NCBI {database} to {out_path} ({size_kb:.0f} KB)"
-
-    except Exception as exc:
-        logger.warning("[ncbi_tools] HTTP fallback failed: %s", exc)
+        return (
+            f"SUCCESS: Downloaded {ids_str} from NCBI {database} to "
+            f"{out_path} ({size_kb:.0f} KB, source={result.source}, "
+            f"attempts={result.attempts})"
+        )
+    if result.ok:
+        out_path.unlink(missing_ok=True)
+        logger.warning("[ncbi_tools] Response too short — likely an NCBI error")
+    else:
+        logger.warning(
+            "[ncbi_tools] HTTP fallback failed (%d attempts): %s",
+            result.attempts,
+            result.error,
+        )
 
     # Final fallback: manual instructions
     from bioagent.tools.data.manual_instructions import generate_download_instructions

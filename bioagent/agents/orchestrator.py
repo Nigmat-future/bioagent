@@ -27,6 +27,28 @@ VALID_PHASES = [
     "complete",
 ]
 
+# Fallback forward-progression for loop escape. Used by the loop detector when
+# the LLM repeatedly picks the same phase (typically because state extraction
+# lost a field like `hypotheses`, tricking it into re-running hypothesis_gen).
+FORWARD_PROGRESSION = {
+    "literature_review": "gap_analysis",
+    "gap_analysis": "hypothesis_generation",
+    "hypothesis_generation": "experiment_design",
+    "experiment_design": "data_acquisition",
+    "data_acquisition": "code_execution",
+    "code_execution": "writing",
+    "result_validation": "writing",
+    "iteration": "code_execution",
+    "writing": "figure_generation",
+    "figure_generation": "review",
+    "review": "complete",
+}
+
+# A phase is considered "looped" when it appears this many times in a row in
+# phase_history. 3 = one initial + two repeats; chosen to catch real loops
+# without false-positive on legitimate retries (iteration uses iteration_count).
+LOOP_THRESHOLD = 3
+
 
 class OrchestratorAgent(BaseAgent):
     """Routes between research phases based on current state.
@@ -72,6 +94,9 @@ class OrchestratorAgent(BaseAgent):
         summary_parts.append(f"Figures: {len(state.get('figures', []))}")
         summary_parts.append(f"Iteration count: {state.get('iteration_count', 0)}")
         summary_parts.append(f"Errors: {len(state.get('errors', []))}")
+        # Phase history (last 8) — used by the anti-backtrack rule in the prompt.
+        history = state.get("phase_history", [])
+        summary_parts.append(f"Phase history (last 8): {history[-8:]}")
 
         if state.get("errors"):
             summary_parts.append(f"Recent errors: {state['errors'][-3:]}")
@@ -112,9 +137,29 @@ class OrchestratorAgent(BaseAgent):
             logger.warning("Failed to parse orchestrator output: %s", result_text[:200])
             next_phase = "literature_review"
 
+        # ── Loop detection ────────────────────────────────────────────────
+        # If the orchestrator keeps re-selecting the same phase (usually because
+        # the LLM state summary drops a field like `hypotheses` and rule 3 wins
+        # over rule 10), force-advance to the next logical phase. Without this
+        # guard, certain cases spin indefinitely on hypothesis_generation.
+        history = state.get("phase_history", [])
+        recent = history[-(LOOP_THRESHOLD - 1):]
+        if (
+            next_phase not in ("complete", "iteration")
+            and len(recent) >= LOOP_THRESHOLD - 1
+            and all(p == next_phase for p in recent)
+        ):
+            forced = FORWARD_PROGRESSION.get(next_phase, "writing")
+            logger.warning(
+                "[orchestrator] Loop detected: '%s' selected %d times in a row. "
+                "Forcing forward progression to '%s'.",
+                next_phase, LOOP_THRESHOLD, forced,
+            )
+            next_phase = forced
+
         return {
             "current_phase": next_phase,
-            "phase_history": state.get("phase_history", []) + [next_phase],
+            "phase_history": history + [next_phase],
         }
 
     def run(self, state: ResearchState) -> dict[str, Any]:

@@ -13,6 +13,11 @@ def register_data_tools() -> None:
         download_encode_file,
         search_encode_datasets,
     )
+    from bioagent.tools.data.ena_tools import (
+        download_10x_pbmc3k,
+        download_geo_from_ena,
+        download_sra_fastq,
+    )
     from bioagent.tools.data.geo_tools import download_geo_dataset
     from bioagent.tools.data.manual_instructions import generate_download_instructions
     from bioagent.tools.data.ncbi_tools import download_ncbi_sequences
@@ -268,6 +273,81 @@ def register_data_tools() -> None:
                 "required": ["file_accession"],
             },
             function=download_encode_file,
+        )
+
+    if "download_10x_pbmc3k" not in _reg.list_tools():
+        _reg.register(
+            name="download_10x_pbmc3k",
+            description=(
+                "Download the canonical 10x Genomics PBMC 3k scRNA-seq benchmark "
+                "from the 10x Cloudflare CDN (fast globally, including China). "
+                "Auto-extracts into workspace/data/pbmc3k/ for scanpy.read_10x_mtx(). "
+                "Strongly preferred over GEO for PBMC 3k benchmarks."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "variant": {
+                        "type": "string",
+                        "description": (
+                            "'filtered' (cell-called, ~2700 cells, default) "
+                            "or 'raw' (pre-cell-calling, ~737k barcodes)"
+                        ),
+                        "default": "filtered",
+                    },
+                },
+            },
+            function=download_10x_pbmc3k,
+        )
+
+    if "download_geo_from_ena" not in _reg.list_tools():
+        _reg.register(
+            name="download_geo_from_ena",
+            description=(
+                "Download a GEO series matrix via the EBI ArrayExpress mirror, "
+                "which is typically faster than NCBI FTP from Asia. Falls back "
+                "to NCBI automatically. Use for GSE accessions."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "accession": {
+                        "type": "string",
+                        "description": "GEO series accession, e.g. 'GSE65904'",
+                    },
+                },
+                "required": ["accession"],
+            },
+            function=download_geo_from_ena,
+        )
+
+    if "download_sra_fastq" not in _reg.list_tools():
+        _reg.register(
+            name="download_sra_fastq",
+            description=(
+                "Download a FASTQ file from ENA by SRA run accession "
+                "(SRR/ERR/DRR). Uses ENA's direct fastq.gz URLs — no "
+                "prefetch/fasterq-dump required. Faster and simpler than "
+                "NCBI SRA from Asia."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "accession": {
+                        "type": "string",
+                        "description": "Run accession, e.g. 'SRR8281117'",
+                    },
+                    "paired": {
+                        "type": "boolean",
+                        "description": (
+                            "If True, fetch both _1.fastq.gz and _2.fastq.gz"
+                        ),
+                        "default": False,
+                    },
+                },
+                "required": ["accession"],
+            },
+            function=download_sra_fastq,
         )
 
     if "generate_download_instructions" not in _reg.list_tools():

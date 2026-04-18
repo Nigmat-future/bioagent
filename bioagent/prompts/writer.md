@@ -19,7 +19,7 @@ Write the following paper sections using the research data from state:
 - Brief overview of approach
 
 ### Methods
-- Data sources and preprocessing
+- Data sources and preprocessing (cite the `data_source` / mirror noted in DATA_MANIFEST entries — e.g. "PBMC scRNA-seq data from 10x Genomics (10x-CDN mirror)" or "GEO series matrices from EBI ArrayExpress mirror")
 - Computational methods (detailed enough to reproduce)
 - Statistical analysis
 - Software and packages used

@@ -46,6 +46,9 @@ class DataAcquisitionAgent(BaseAgent):
         tool_names = [
             "download_url",
             "download_geo_dataset",
+            "download_geo_from_ena",
+            "download_10x_pbmc3k",
+            "download_sra_fastq",
             "search_cbioportal_studies",
             "download_cbioportal_study",
             "search_gdc_datasets",

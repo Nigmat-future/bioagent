@@ -1,0 +1,35 @@
+@article{PMC2017,
+  author  = {(PubMed / Europe PMC)},
+  title   = {), which demonstrated massively parallel digital transcriptional profiling and processed tens of thousands of cells, established the now-canonical PBMC taxonomy used as a benchmark dataset worldwide. Early studies converged on 8–14 major transcriptionally distinct populations: **CD4+ T cells** (naïve/CM: *IL7R, CCR7, TCF7, SELL*; effector/EM: *IL7R, S100A4*), **CD8+ T cells** (*CD8A, CD8B, GZMK, GZMB*), **NK cells** (*NKG7, GNLY, FGFBP2, KLRD1, PRF1*), **B cells** (*CD19, MS4A1, CD79A*), **CD14+ classical monocytes** (*CD14, LYZ, S100A8, S100A9*), **CD16+ non-classical monocytes** (*FCGR3A, MS4A7*), **conventional dendritic cells (cDC1/cDC2)** (*FCER1A, CST3, CD1C*), **plasmacytoid DCs (pDCs)** (*IL3RA, LILRA4, CLEC4C*), and **megakaryocytes/platelets** (*PPBP, PF4*). A pivotal Science paper by Villani et al. (2017; PMID 28428369) used scRNA-seq of ~2,400 blood cells to refine this taxonomy, identifying 6 DC subtypes and 4 monocyte subtypes — including a novel DC population (*AXL+SIGLEC6+*, termed "AS DCs") that potently activates T cells, and reclassifying pDCs as primarily interferon-producing cells with weaker T cell stimulation capacity. This work underscored how scRNA-seq can discover biologically meaningful populations invisible to traditional flow cytometry},
+  journal = {Nat Commun},
+  year    = {2017},
+  doi     = {10.1038/ncomms14049},
+  pmid    = {28091601},
+}
+
+@article{PMC2020,
+  author  = {(PubMed / Europe PMC)},
+  title   = {) mapped peripheral immune cell reconfigurations in severe COVID-19, revealing HLA class II downregulation on monocytes, heterogeneous interferon-stimulated gene signatures, and an emergent low-density developing neutrophil cluster. Zhu et al. (2020; PMID 32780218) constructed a circulating immune cell landscape across aging, identifying T cell polarization toward effector/senescent phenotypes in older individuals. The landmark Domínguez Conde & Teichmann (2022; PMID 35549406) cross-tissue immune atlas, profiling ~360,000 cells from 16 tissues in 12 donors using CellTypist, placed blood PBMC populations in a broader multi-tissue context, revealing that blood-circulating immune cells differ substantially from their tissue-resident counterparts in key marker expression. Rare populations such as **MAIT cells** (*SLC4A10, KLRB1, NCR3*), **regulatory T cells (Tregs)** (*FOXP3, IL2RA, CTLA4*), **NK T cells**, and **plasmablasts** (*MZB1, IGHG1, JCHAIN*) have been consistently identified as minor but reproducible components of the PBMC landscape},
+  journal = {Nat Med},
+  year    = {2020},
+  doi     = {10.1038/s41591-020-0944-y},
+  pmid    = {32514174},
+}
+
+@article{PMC2019,
+  author  = {(PubMed / Europe PMC)},
+  title   = {) benchmarked 22 automatic cell identification methods, finding that support vector machine (SVM)-based classifiers generally outperform others, though all methods show reduced accuracy for rare, overlapping, or deeply annotated populations. More recently, tools like **CellTypist** (embedded in PMID 35549406), **SCINA**, and transformer-based approaches (PMID 36641532) have emerged, leveraging transfer learning from large reference atlases. Multi-omic integration platforms, particularly Seurat WNN and MOFA (PMID 34062119), now allow simultaneous analysis of gene expression and protein (CITE-seq) data, enabling higher-resolution marker identification. Despite this progress, key challenges remain in resolving rare immune populations, handling batch effects across donors/technologies, and translating population discoveries into functionally validated biological entities},
+  journal = {Genome Biol},
+  year    = {2019},
+  doi     = {10.1186/s13059-019-1795-z},
+  pmid    = {31500660},
+}
+
+@article{PMC2023,
+  author  = {(PubMed / Europe PMC)},
+  title   = {) and pre-trained models (e.g., Geneformer, scGPT) show promise, they are largely untested on deeply annotated PBMC datasets with rare populations. **Gap:** A large-scale, pretrained, PBMC-specific foundation model incorporating multi-omic data, donor metadata, and disease context — with rigorous rare-cell benchmarking — does not yet exist},
+  journal = {Nat Commun},
+  year    = {2023},
+  doi     = {10.1038/s41467-023-35923-4},
+  pmid    = {36641532},
+}

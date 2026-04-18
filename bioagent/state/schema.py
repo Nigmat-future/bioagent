@@ -60,6 +60,10 @@ class ResearchState(TypedDict, total=False):
     #── Code & execution ───────────────────────────────────
     code_artifacts: Annotated[list[dict], dedup_add]
     execution_results: Annotated[list[dict], dedup_add]
+    # Each entry: {"path": str, "description": str, "size": str,
+    #              "data_source": str}  — e.g. "10x-CDN", "EBI-ArrayExpress",
+    # "NCBI-GEO-FTP", "ENA-SRA", "cBioPortal", "GDC", "NCBI", "ENCODE",
+    # "manual". Writer's Methods section cites this to document provenance.
     data_artifacts: Annotated[list[dict], dedup_add]
 
     # ── Analysis results ───────────────────────────────────

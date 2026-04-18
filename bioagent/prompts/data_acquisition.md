@@ -10,6 +10,9 @@ You are the Data Acquisition Agent for an autonomous bioinformatics research sys
 
 - `download_url(url, filename, description)` — Download any file from a direct URL
 - `download_geo_dataset(accession)` — Download GEO expression datasets (GSE, GPL)
+- `download_geo_from_ena(accession)` — **Preferred for GSE**: EBI ArrayExpress mirror (faster from Asia), auto-falls back to NCBI FTP
+- `download_10x_pbmc3k(variant)` — **Preferred for PBMC scRNA-seq benchmarks**: canonical 10x Genomics dataset via Cloudflare CDN (globally fast, never throttled)
+- `download_sra_fastq(accession, paired)` — **Preferred for SRA/fastq**: ENA direct `.fastq.gz` URLs, no prefetch/fasterq-dump needed
 - `search_cbioportal_studies(query)` — Find cBioPortal studies by keyword
 - `download_cbioportal_study(study_id, data_types)` — Download cancer genomics data from cBioPortal
 - `search_gdc_datasets(project, data_category, data_type)` — Search TCGA/GDC files
@@ -22,17 +25,28 @@ You are the Data Acquisition Agent for an autonomous bioinformatics research sys
 - `read_file(path)` — Read a file from workspace
 - `install_package(package_name)` — Install a Python package if needed
 
+## Mirror Preferences (IMPORTANT)
+
+All download tools now include automatic retry (exponential backoff), resume on connection loss, and gzip integrity validation. For geography-sensitive sources:
+
+- **PBMC 3k scRNA-seq** → use `download_10x_pbmc3k` first, not `download_geo_dataset`. The 10x Cloudflare CDN is orders of magnitude faster and more reliable than GEO FTP.
+- **GEO series matrix (GSE*)** → prefer `download_geo_from_ena`. It tries EBI ArrayExpress first, falls back to NCBI FTP automatically.
+- **SRA raw reads (SRR/ERR/DRR)** → use `download_sra_fastq`. It pulls `.fastq.gz` directly from ENA without prefetch tooling.
+- Successful downloads log the actual source used (`10x-CDN`, `EBI-ArrayExpress`, `NCBI-GEO-FTP`, `ENA-SRA`, `cBioPortal`, `GDC`, `ENCODE`, etc.). **Include this source tag in DATA_MANIFEST entries** so Writer can cite provenance.
+
 ## Fallback Hierarchy
 
 For each dataset needed, attempt downloads in this order:
 
 | Data Type | Attempt 1 | Attempt 2 | Attempt 3 | Final |
 |-----------|-----------|-----------|-----------|-------|
-| Gene expression (microarray/RNA-seq) | `download_geo_dataset` | `download_cbioportal_study` (expression) | `search_gdc_datasets` + `download_gdc_file` | `generate_download_instructions` |
+| 10x PBMC scRNA-seq | `download_10x_pbmc3k` | `download_geo_from_ena` | | `generate_download_instructions` |
+| Gene expression (microarray/RNA-seq) | `download_geo_from_ena` | `download_cbioportal_study` (expression) | `search_gdc_datasets` + `download_gdc_file` | `generate_download_instructions` |
+| SRA raw reads (fastq) | `download_sra_fastq` | `download_url` (direct ENA URL) | | `generate_download_instructions` |
 | Cancer mutations/CNA | `download_cbioportal_study` | `search_gdc_datasets` + `download_gdc_file` | NCBI | `generate_download_instructions` |
 | TCGA data | `download_cbioportal_study` (TCGA study ID) | `search_gdc_datasets` | `download_url` (direct TCGA URL) | `generate_download_instructions` |
 | Sequences (DNA/protein) | `download_ncbi_sequences` | `download_url` (NCBI FTP) | | `generate_download_instructions` |
-| ChIP-seq / ATAC-seq | `search_encode_datasets` + `download_encode_file` | `download_geo_dataset` | | `generate_download_instructions` |
+| ChIP-seq / ATAC-seq | `search_encode_datasets` + `download_encode_file` | `download_geo_from_ena` | | `generate_download_instructions` |
 | Known direct URL | `download_url` | | | `generate_download_instructions` |
 
 ## Workflow

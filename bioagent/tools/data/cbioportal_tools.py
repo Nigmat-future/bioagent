@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import urllib.parse
-import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -101,26 +100,23 @@ def _biomcp_study_list(query: str) -> str:
 
 
 def _api_search_studies(query: str) -> str:
-    """Search cBioPortal REST API for studies."""
-    try:
-        url = f"{_API_BASE}/studies?keyword={urllib.parse.quote(query)}&pageSize=20"
-        req = urllib.request.Request(url, headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            studies = json.loads(resp.read().decode())
+    """Search cBioPortal REST API for studies (with retry)."""
+    from bioagent.tools.data._http import get_json
 
-        if not studies:
-            return f"No studies found for query: {query}"
+    url = f"{_API_BASE}/studies?keyword={urllib.parse.quote(query)}&pageSize=20"
+    studies, source = get_json(url, timeout=30.0, source_label="cBioPortal")
+    if studies is None:
+        return f"ERROR (cBioPortal API search): {source}"
+    if not isinstance(studies, list) or not studies:
+        return f"No studies found for query: {query}"
 
-        lines = [f"Found {len(studies)} cBioPortal studies:\n"]
-        for s in studies[:10]:
-            lines.append(
-                f"- {s.get('studyId', '?')} | {s.get('name', 'Unknown')} "
-                f"({s.get('allSampleCount', '?')} samples)"
-            )
-        return "\n".join(lines)
-
-    except Exception as exc:
-        return f"ERROR (cBioPortal API search): {exc}"
+    lines = [f"Found {len(studies)} cBioPortal studies:\n"]
+    for s in studies[:10]:
+        lines.append(
+            f"- {s.get('studyId', '?')} | {s.get('name', 'Unknown')} "
+            f"({s.get('allSampleCount', '?')} samples)"
+        )
+    return "\n".join(lines)
 
 
 def _download_data_type(study_id: str, dtype: str, data_dir) -> str:
@@ -140,28 +136,26 @@ def _download_data_type(study_id: str, dtype: str, data_dir) -> str:
     url = _API_BASE + endpoint
     out_file = data_dir / f"{dtype}.json"
 
+    from bioagent.tools.data._http import get_json
+
+    data, source = get_json(url, timeout=60.0, source_label="cBioPortal")
+    if data is None:
+        if "404" in source:
+            return (
+                f"ERROR: Profile '{study_id}_{dtype}' not found (404). "
+                "Study may use a different profile ID."
+            )
+        return f"ERROR: {source}"
+    if not data:
+        return f"ERROR: Empty response from {url}"
+
     try:
-        req = urllib.request.Request(url, headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            data = resp.read()
-
-        if len(data) < 10:
-            return f"ERROR: Empty response from {url}"
-
-        out_file.write_bytes(data)
-
-        # Also write a CSV if it's parseable
+        out_file.write_text(json.dumps(data), encoding="utf-8")
         _json_to_csv(out_file, dtype)
-
         size_kb = out_file.stat().st_size / 1024
-        return f"SUCCESS: {out_file.name} ({size_kb:.0f} KB)"
-
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
-            return f"ERROR: Profile '{study_id}_{dtype}' not found (404). Study may use different profile ID."
-        return f"ERROR: HTTP {exc.code} for {dtype}"
+        return f"SUCCESS: {out_file.name} ({size_kb:.0f} KB, source={source})"
     except Exception as exc:
-        return f"ERROR: {exc}"
+        return f"ERROR: write failed: {exc}"
 
 
 def _json_to_csv(json_path, dtype: str) -> None:

@@ -64,6 +64,19 @@ class Settings(BaseSettings):
     download_timeout: int = 300
     entrez_email: str = "bioagent@example.com"
 
+    # --- Download resilience ---
+    # Assumed floor bandwidth (Mbit/s) used to compute adaptive read timeouts
+    # from Content-Length. Lower = more patient on slow links.
+    min_download_mbps: float = 2.0
+    # Max attempts per URL (tenacity stop_after_attempt). 4 = one initial
+    # try + 3 retries with 2→4→8→16s exponential backoff.
+    download_max_retries: int = 4
+    # Stale .tmp files older than this are cleaned up on module init.
+    tmp_stale_hours: int = 24
+    # When True, tools prefer Asia-friendly mirrors (EBI/ENA/10x CDN) before
+    # NCBI. Disable only when EBI paths are known to be down.
+    prefer_mirrors: bool = True
+
     # --- Reproducibility ---
     random_seed: int = 42
 

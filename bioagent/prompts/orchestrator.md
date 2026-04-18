@@ -48,6 +48,16 @@ Decide the next phase by examining what has been accomplished:
 - If `errors` list is growing: route to `iteration` for debugging
 - If `human_feedback` is present: incorporate it into the next phase decision
 
+## Anti-backtrack rule (IMPORTANT)
+
+The state summary includes `phase_history`. Once a phase has been completed AND a later phase has also appeared, do NOT re-route to the earlier one:
+
+- If `code_execution` appears in phase_history, never return to `hypothesis_generation`, `gap_analysis`, or `literature_review` — move forward toward `writing` instead.
+- If `writing` appears in phase_history, never return to `code_execution` or earlier phases unless validation explicitly failed.
+- An empty `hypotheses` count in the state summary does NOT mean hypotheses were never generated — the field can be dropped during later planner re-runs. Check `phase_history` to determine whether `hypothesis_generation` already ran; if it did, move forward.
+
+When in doubt, prefer forward motion. The pipeline has explicit retry loops (`iteration` for failed code_execution, multi-round `review` for writing) for legitimate revision — use those, not phase-level backtracking.
+
 ## Output Format
 
 Respond with ONLY a JSON object:
