@@ -54,29 +54,48 @@ E-mail: \texttt{nigmatrahim@stu.pku.edu.cn}
 The pace of biomedical discovery is increasingly bottlenecked by the manual
 effort required to synthesise literature, form testable hypotheses, execute
 computational analyses and produce publication-quality manuscripts.
-Large language models (LLMs) offer new opportunities to automate these
-steps, yet existing tools address only isolated stages of the research
-pipeline.
+Large language models (LLMs) enable new automation opportunities, but
+end-to-end autonomous research remains difficult: existing systems either
+address isolated stages or operate on pre-curated data and therefore never
+encounter the brittleness of real biomedical data portals (partial
+downloads, corrupted archives, and geography-dependent latency).
 
 \textbf{Results:}
-We present \textbf{BioAgent}, an autonomous multi-agent system that orchestrates
-six specialised AI agents—LiteratureAgent, PlannerAgent, AnalystAgent,
-WriterAgent, VisualizationAgent and ReviewAgent—in a directed LangGraph
-workflow to conduct end-to-end bioinformatics research.
+We present \textbf{BioAgent}, an autonomous multi-agent system that
+orchestrates seven specialised agents—Orchestrator, Literature, Planner,
+DataAcquisition, Analyst, Writer, Visualization, and Review—in a directed
+LangGraph workflow to conduct end-to-end bioinformatics research.
 Given a natural-language research question, BioAgent autonomously retrieves
-and synthesises the primary literature via BioMCP, generates novel
-computationally testable hypotheses, designs and executes statistical
-analyses with full reproducibility (seeded randomness, provenance logging),
-produces manuscript sections with numbered citations, generates
-publication-quality figures following Nature/Science aesthetic guidelines,
-and exports the resulting manuscript as Markdown or Oxford-format
-\LaTeX{}.
-In a case study on BRAF V600E-driven melanoma, BioAgent recovered 80\%
-of key reference papers, generated a statistically valid differential
-expression analysis, and produced a complete draft manuscript in under
-three hours of unattended execution at a cost of \$\approx$0.40 (USD).
-BioAgent reduces researcher time from days to hours for the literature-
-to-draft pipeline while maintaining scientific rigour.
+and synthesises primary literature via BioMCP (PubMed, ClinVar, OncoKB),
+generates novel testable hypotheses, downloads real datasets from GEO,
+cBioPortal, GDC, NCBI and ENCODE with per-file mirror provenance, executes
+reproducible statistical analyses (seeded randomness, SHA-256 hashing),
+drafts full IMRAD manuscripts with PMID-grounded citations, generates
+publication-quality figures, and self-reviews the output against a
+six-dimension rubric.
+To our knowledge, BioAgent is the first autonomous biomedical research
+agent that closes the loop from \emph{live} multi-repository data
+acquisition — with mirror-aware, retry/resume-hardened downloads and
+per-file \texttt{data\_source} provenance — through analysis to a
+self-reviewed IMRAD manuscript.
+Comparable recent systems (Biomni, CellAgent, GeneAgent, TxAgent)
+either operate on pre-curated or user-supplied data and stop at
+analysis output.
+A distinctive contribution is the resilient data-acquisition layer
+(\texttt{httpx}+\texttt{tenacity} with Range-resume, gzip-integrity
+validation, adaptive timeouts, and mirror-first routing through EBI
+ArrayExpress, ENA direct \texttt{fastq.gz}, and the 10x~Genomics
+Cloudflare CDN) that converts geography-hostile endpoints from a dominant
+failure mode into transparent fallback.
+Across three benchmark cases (BRAF V600E melanoma, TP53 pan-cancer, and
+10x~Genomics PBMC~3k), weighted scores on a 0--10 rubric improved from
+a previous baseline of 4.27 to 7.65 on average, with the TP53 case rising
+from a pre-fix 1.06 (aborted in literature phase) to 8.42 with a
+4{,}439-word manuscript and six figures.
+Full pipelines complete in 45--82 minutes at \$7.62--\$14.19 per case,
+orders of magnitude below equivalent expert-researcher time cost, with
+every artefact traceable through a serialised \texttt{ResearchState}
+blackboard.
 
 \textbf{Availability:}
 BioAgent is open-source (MIT) at
@@ -114,20 +133,46 @@ BioAgent addresses this gap.
 Its key contributions are:
 
 \begin{enumerate}
-  \item A six-agent LangGraph \texttt{StateGraph} with blackboard
+  \item A seven-agent LangGraph \texttt{StateGraph} with blackboard
         architecture (\texttt{ResearchState}, 30+ typed fields) and
-        SQLite-backed session checkpointing.
+        SQLite-backed session checkpointing that supports mid-run
+        resumption after API-gateway or network failures
+        (\texttt{benchmarks/resume\_run.py}; demonstrated to save
+        $\sim$40~min and $\sim$\$7 per recovered case).
+  \item A dedicated \textbf{DataAcquisitionAgent} spanning nine
+        primary sources (GEO, cBioPortal, GDC/TCGA, NCBI E-utilities,
+        ENCODE, ENA, EBI ArrayExpress, 10x~Genomics CDN, generic URL)
+        with a resilient HTTP backbone
+        (\texttt{bioagent/tools/data/\_http.py}) featuring
+        exponential-backoff retry, HTTP-Range-based resume, adaptive
+        read timeouts derived from \texttt{Content-Length}, and
+        post-download gzip-integrity validation. To our knowledge this
+        is the first autonomous research agent treating mirror choice
+        as first-class provenance (\S\ref{sec:resilience}), recording
+        which mirror served each file in a \texttt{data\_source} field
+        that the WriterAgent cites in Methods.
+  \item An \textbf{orchestrator loop detector} (\S\ref{sec:orchestrator})
+        combining a deterministic fallback (forced forward progression
+        after three consecutive same-phase selections) with a
+        phase-history-aware prompt rule, which eliminated a regression
+        in which the LLM re-selected
+        \texttt{hypothesis\_generation} indefinitely after
+        \texttt{code\_execution}.
   \item BioMCP integration for structured literature retrieval with
-        PMID-level citation tracking.
-  \item Reproducible Python execution with automatic seed injection
-        (\texttt{numpy}, \texttt{random}), provenance logging
-        (model version, timestamps, input/output SHA-256 hashes).
-  \item An export pipeline producing \LaTeX{} manuscripts in
-        Bioinformatics~(OUP) format with BibTeX reference generation.
+        PMID-level citation tracking; an export pipeline producing
+        \LaTeX{} manuscripts in Bioinformatics~(OUP) format with
+        auto-generated BibTeX; and reproducible Python execution with
+        automatic seed injection and SHA-256-hashed provenance.
   \item A six-dimension evaluation framework (literature coverage,
         hypothesis quality, analysis correctness, writing quality,
-        figure quality, efficiency) enabling quantitative comparison
-        across configurations.
+        figure quality, efficiency) validated on three benchmark cases
+        with before/after comparisons against the pre-resilience
+        pipeline (v0.1), showing mean improvement from 4.27 to 7.65 on
+        a 0--10 rubric; the TP53 case rose from 1.06 (no manuscript)
+        to 8.42 (full IMRAD + 6 figures + passing self-review), the
+        strongest single-variable quantitative argument for treating
+        data-acquisition resilience as a first-class component of
+        autonomous research agents rather than as plumbing.
 \end{enumerate}
 
 %% ─────────────────────────────────────────────────────────────────────────────
@@ -507,25 +552,55 @@ manuscripts and the latter for exploratory sweeps.
 
 %% ─────────────────────────────────────────────────────────────────────────────
 \section{Comparison with Existing Tools}
+\label{sec:comparison}
 
-Table~\ref{tab:comparison} positions BioAgent against related systems
-on a capability axis.
-Unlike Table~\ref{tab:braf_run}, which reports quantitative head-to-head
-numbers against executed baselines, this table captures structural
-capability. BioGPT~\cite{luo2022} and ChemCrow~\cite{bran2023chemcrow}
-are included as capability references (see also
-\texttt{benchmarks/baselines/biogpt\_reference.md}); neither was
-re-executed on our benchmark because their scopes do not admit a like-
-for-like comparison of the full pipeline.
+A wave of autonomous biomedical agents arrived in 2024--2025; none of
+them, to our knowledge, closes the full loop from live data acquisition
+to a self-reviewed IMRAD manuscript.
+Table~\ref{tab:comparison} positions BioAgent against the strongest
+recent systems along six capability axes. Older systems (BioGPT, ChemCrow,
+AutoGen, Coscientist) are included as historical references but are not
+the active comparison targets.
+
+\textbf{Biomni}~\cite{biomni2025} (Snap-Stanford / Zitnik lab, bioRxiv
+May~2025) is the strongest \emph{breadth} baseline: a generalist agent
+with 150 tools and a data lake of 77 pre-curated datasets (downloaded
+once from S3, then queried locally). It sets SOTA on LAB-Bench
+(DbQA 74.4\%, SeqQA 81.9\%) and HLE (17.3\%, +402\% over base LLMs).
+Biomni does not perform live multi-repository downloads at analysis
+time and does not report per-file provenance; its outputs are
+analysis results, not IMRAD manuscripts.
+\textbf{TxAgent}~\cite{txagent2025} (Harvard Zitnik lab, Mar~2025) is a
+therapeutic-reasoning specialist built on ToolUniverse (211 FDA/OpenTargets
+tools) with ToolRAG retrieval; it queries live APIs but does not download
+bulk data or emit manuscripts.
+\textbf{CellAgent}~\cite{cellagent2024} (bioRxiv May~2024, arXiv~2407.09811)
+is a three-role (Planner/Executor/Evaluator) scRNA-seq analysis agent;
+it operates on user-supplied AnnData and has no acquisition layer.
+\textbf{GeneAgent}~\cite{geneagent2025} (Lu lab, \emph{Nature Methods}
+2025) is a self-verification agent for gene-set annotation that cross-checks
+LLM output against expert-curated databases (92\% correct on 1,106 gene
+sets), but is scoped to annotation rather than end-to-end research.
+
+BioAgent is the only listed system that (a)~downloads data at analysis time
+from nine primary repositories, (b)~records per-file mirror provenance
+that the WriterAgent cites in Methods, and (c)~emits a
+self-reviewed IMRAD manuscript. Its cost (\$7--\$14 per complete
+manuscript, Table~\ref{tab:braf_run}) is higher than the query-only
+systems but buys end-to-end completion from research question to
+submission-ready draft.
 
 \begin{table}[htbp]
-\caption{Capability comparison of BioAgent with related tools and
-  baselines. ``Literature'' requires structured PMID-grounded
-  retrieval; ``Data acquisition'' requires non-synthetic dataset
-  download from primary repositories; ``Code exec.'' requires in-pipeline
-  execution of generated code with automatic failure recovery;
-  ``Iterative review'' requires programmatic self-review that can gate
-  further revisions.}
+\caption{Capability comparison with autonomous biomedical agents
+  (2024--2025) and legacy references. ``Live data acq.'' requires
+  non-synthetic dataset download from primary repositories at
+  analysis time (not pre-curated data lake). ``Mirror/provenance''
+  requires per-file tracking of which mirror or URL served each
+  artefact. ``IMRAD'' requires a complete journal-format manuscript
+  (Abstract, Introduction, Methods, Results, Discussion) as output.
+  ``Iter. review'' requires programmatic self-review that can gate
+  further revisions. ``Resume/retry'' requires network-level retry,
+  Range-based resume, or checkpoint-based mid-run recovery.}
 \label{tab:comparison}
 \centering
 \small
@@ -533,21 +608,32 @@ for-like comparison of the full pipeline.
 \toprule
 \textbf{System} &
   \textbf{Literature} &
-  \textbf{Data acq.} &
-  \textbf{Code exec.} &
-  \textbf{Manuscript} &
+  \textbf{Live data acq.} &
+  \textbf{Mirror/prov.} &
+  \textbf{IMRAD} &
   \textbf{Iter. review} &
-  \textbf{Tools} \\
+  \textbf{Resume/retry} \\
 \midrule
-Single LLM prompt           & $\times$ & $\times$ & $\times$ & Partial  & $\times$ & 0 \\
-AutoGen~\cite{wu2023}       & $\times$ & $\times$ & Optional & $\times$ & $\times$ & 0 \\
-BioGPT~\cite{luo2022}       & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ & 0 \\
-ChemCrow~\cite{bran2023chemcrow} & $\times$ & $\times$ & \checkmark & $\times$ & $\times$ & 17 \\
-Coscientist~\cite{Boiko2023coscientist} & Partial & $\times$ & \checkmark & $\times$ & $\times$ & -- \\
-BioMANIA~\cite{xiao2024biomania} & $\times$ & $\times$ & \checkmark & Partial & $\times$ & -- \\
-\textbf{BioAgent (ours)}    & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark & 24 \\
+\multicolumn{7}{l}{\textit{2024--2025 autonomous biomedical agents}} \\
+Biomni~\cite{biomni2025}          & \checkmark & Partial$^{a}$ & $\times$   & $\times$ & Partial  & $\times$ \\
+TxAgent~\cite{txagent2025}        & Partial    & $\times$$^{b}$ & $\times$  & $\times$ & $\times$ & $\times$ \\
+CellAgent~\cite{cellagent2024}    & $\times$   & $\times$$^{c}$ & $\times$  & $\times$ & \checkmark & $\times$ \\
+GeneAgent~\cite{geneagent2025}    & $\times$   & $\times$$^{b}$ & $\times$  & $\times$ & \checkmark & $\times$ \\
+\textbf{BioAgent (ours)}          & \checkmark & \checkmark    & \checkmark & \checkmark & \checkmark & \checkmark \\
+\midrule
+\multicolumn{7}{l}{\textit{Baselines and legacy}} \\
+Single LLM prompt                 & $\times$ & $\times$ & $\times$ & Partial  & $\times$ & $\times$ \\
+AutoGen~\cite{wu2023}             & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ \\
+BioGPT~\cite{luo2022}             & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ \\
+ChemCrow~\cite{bran2023chemcrow}  & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ \\
+Coscientist~\cite{Boiko2023coscientist} & Partial & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ \\
+BioMANIA~\cite{xiao2024biomania}  & $\times$ & $\times$ & $\times$ & Partial & $\times$ & $\times$ \\
 \bottomrule
-\end{tabular}
+\end{tabular}\\[3pt]
+{\footnotesize $^{a}$ Biomni queries a pre-downloaded static data lake
+(77 datasets) rather than performing live acquisition at analysis time.
+$^{b}$ API query only, no bulk dataset download.
+$^{c}$ Operates exclusively on user-supplied AnnData objects.}
 \end{table}
 
 \subsection{Ablation Study}
