@@ -88,7 +88,7 @@ BioAgent is an autonomous research system that conducts **end-to-end bioinformat
 
 ```bash
 # Clone the repository
-git clone https://github.com/nigmatrahim/bioagent.git
+git clone https://github.com/Nigmat-future/bioagent.git
 cd bioagent
 
 # Install in development mode (editable)
@@ -225,7 +225,7 @@ If you use BioAgent in your research, please cite:
   author  = {Rahim, Nigmat},
   journal = {Bioinformatics},
   year    = {2026},
-  note    = {Under review. Preprint at \url{https://github.com/nigmatrahim/bioagent}}
+  note    = {Under review. Preprint at \url{https://github.com/Nigmat-future/bioagent}}
 }
 ```
 

@@ -27,3 +27,21 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.log
+paper/*.toc
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+
+# Test/lint caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.benchmarks/
+.tmp_pytest/

@@ -1,0 +1,125 @@
+@article{PMC2017,
+  author  = {(PubMed / Europe PMC)},
+  title   = {, ~5,578 citations) in 2017, which enabled massively parallel profiling of tens of thousands of cells, and the development of CITE-seq (PMID 28759029, ~2,486 citations), which coupled surface protein measurement to transcriptomics in the same cells. These platforms allowed a rigorous, unbiased reclassification of blood immune populations. The landmark Villani et al. *Science* 2017 study (PMID 28428369, ~1,921 citations) profiled ~2,400 cells and identified **6 dendritic cell (DC) subtypes** and **4 monocyte subtypes**, redefining plasmacytoid DCs (pDCs) and discovering a circulating cDC progenitor. Canonical marker genes emerging across studies coalesce around well-defined lineages: **CD3D/CD3E** (pan-T cell), **CD4/IL7R/FOXP3** (CD4+ T and Treg), **CD8A/CD8B/NKG7/GZMB** (CD8+ T and cytotoxic), **NCAM1/KLRB1/GNLY** (NK cells), **CD14/LYZ/S100A8/S100A9** (classical monocytes), **FCGR3A/MS4A7** (non-classical monocytes), **CD19/MS4A1/CD79A** (B cells), **MZB1/IGLL5/JCHAIN** (plasmablasts/plasma cells), **FCER1A/CD1C/CLEC10A** (cDC2), **CLEC9A/CADM1** (cDC1), and **CLEC4C/LILRA4/IRF7** (pDC). The Seurat WNN framework (PMID 34062119, ~12,378 citations) and scVI/scANVI (PMID 33491336, ~515 citations) established the computational standards for multimodal integration and cell type annotation},
+  journal = {Nat Commun},
+  year    = {2017},
+  doi     = {10.1038/ncomms14049},
+  pmid    = {28091601},
+}
+
+@article{PMC2020,
+  author  = {(PubMed / Europe PMC)},
+  title   = {, ~1,350 citations) and Stephenson & Haniffa (PMID 33879890, ~614 citations) profiled up to 780,000 PBMCs in hundreds of patients across disease severities, revealing expansions of nonclassical monocytes (CD16+/C1QA+/C1QB+/C1QC+), plasmablasts, and clonally expanded CD8+ T cells as disease hallmarks. The Domínguez Conde & Teichmann cross-tissue atlas (PMID 35549406, ~836 citations) profiled ~360,000 immune cells from 16 tissues, introducing **CellTypist**, a machine-learning tool for rapid, hierarchical cell type annotation that has become widely adopted. Simultaneously, resource projects have addressed the major technical limitation of cross-study comparability: **PBMCpedia** (PMID 41277528, 2025) uniformly reprocessed 519 samples (4.3 million cells) from 24 studies across 14 disease contexts with standardized QC and hierarchical annotation, while **CZ CELLxGENE Discover** (PMID 39607691, ~250 citations) now provides meta-analytical access to tens of millions of cells. The scArches framework (PMID 34462589, ~447 citations) enables reference-based query mapping without sharing raw data. Studies on aging (PMID 37005201) further show that PBMC composition shifts measurably across the human lifespan — centenarians exhibit CD4:CD8 and lymphocyte:myeloid ratio changes and unique transcriptional signatures (e.g., STK17A, S100A4) — while the vaccine transcriptomics atlas (PMID 36316475) demonstrated that PBMC profiling reliably captures innate and adaptive immune activation kinetics across 13 different vaccine types},
+  journal = {Nat Med},
+  year    = {2020},
+  doi     = {10.1038/s41591-020-0944-y},
+  pmid    = {32514174},
+}
+
+@article{PMC2024,
+  author  = {(PubMed / Europe PMC)},
+  title   = {, *Nat Genet*, 2024) mapped 11,577 cell-type-specific splicing QTLs (sQTLs) in ~1 million PBMCs from 474 donors, revealing cell-type-specific, sex-biased, and ancestry-biased alternative splicing, with enrichment in autoimmune disease heritability. Long-read single-cell sequencing of PBMCs (PMID 41279381, 2025; PMID 35130954, ~54 citations) is revealing 128+ novel isoforms with cell-type-specific expression patterns, demonstrating that gene-level annotations are insufficient to fully characterize immune cell identity. Epigenetic memory studies (PMID 37597510, ~227 citations) show that PBMC-resident hematopoietic progenitors (HSPCs) undergo durable chromatin remodeling months after severe COVID-19, with IL-6 as a key driver. On the computational side, foundation models (SCimilarity, PMID 39566551; GeneCompass, PMID 39375485; CellxGene census models) are enabling unified representation of millions of cells across studies, though a critical evaluation (PMID 40251685) highlights significant limitations of zero-shot cell annotation by current foundation models — an active area of development. The hematopoietic CITE-seq atlas (PMID 38514887) with 266 antibodies resolved >80 stem and progenitor states and reveals surface markers for FACS isolation of computationally predicted states, closing the loop between transcriptomics and experimental immunology},
+  journal = {Nat Genet},
+  year    = {2024},
+  doi     = {10.1038/s41588-024-02019-8},
+  pmid    = {39627432},
+}
+
+@article{PMC2025,
+  author  = {(PubMed / Europe PMC)},
+  title   = {). Current canonical marker lists are entirely gene-level. A systematic long-read scRNA-seq reference atlas of PBMCs that defines **isoform signatures** per cell type does not yet exist. This is particularly relevant for alternatively spliced surface receptor genes (PTPRC/CD45, NCAM1) with isoforms that carry distinct functional consequences},
+  journal = {bioRxiv},
+  year    = {2025},
+  doi     = {10.1101/2025.10.16.682832},
+  pmid    = {41279381},
+}
+
+@article{PMC2025,
+  author  = {(PubMed / Europe PMC)},
+  title   = {) and the Asian Immune Diversity Atlas (PMID 39627432) begin to address this, but comprehensive, **multi-ancestry PBMC reference atlases** with matched European, African, East Asian, and South Asian populations — each with sufficient sample sizes for eQTL/sQTL mapping — are lacking. Current references are predominantly European, limiting generalizability of marker gene thresholds and cell proportion norms},
+  journal = {Nucleic Acids Res},
+  year    = {2025},
+  doi     = {10.1093/nar/gkaf1245},
+  pmid    = {41277528},
+}
+
+@article{PMC2022,
+  author  = {(PubMed / Europe PMC)},
+  title   = {), scANVI (PMID 33491336), and scArches (PMID 34462589) achieve high accuracy on abundant populations but fail on novel, disease-specific, or rare cell states. The zero-shot limitations of foundation models (PMID 40251685) further underscore that no current method reliably annotates unseen cell types. **Active learning or uncertainty-quantifying annotation tools** that flag ambiguous cells for expert review are a clear computational need},
+  journal = {Science},
+  year    = {2022},
+  doi     = {10.1126/science.abl5197},
+  pmid    = {35549406},
+}
+
+@article{PMC2024,
+  author  = {(PubMed / Europe PMC)},
+  title   = {) and GeneCompass (PMID 39375485) use large corpora but are tested primarily on abundant cell types. A **rigorous benchmark of foundation model performance specifically on PBMC subtypes** — including sensitivity for detecting rare cell types, robustness to batch effects, and performance across ancestry groups — is an unmet need highlighted by PMID 40251685},
+  journal = {Nature},
+  year    = {2024},
+  doi     = {10.1038/s41586-024-08411-y},
+  pmid    = {39566551},
+}
+
+@article{PMC2023,
+  author  = {(PubMed / Europe PMC)},
+  title   = {studies centenarians and PMID 37005201 captures age-related shifts, no study has profiled the same individuals longitudinally at scRNA-seq resolution across decades. Understanding *individual* immune trajectories vs. cross-sectional age effects requires such a design},
+  journal = {EBioMedicine},
+  year    = {2023},
+  doi     = {10.1016/j.ebiom.2023.104514},
+  pmid    = {37005201},
+}
+
+@article{PMC2021,
+  author  = {(PubMed / Europe PMC)},
+  title   = {) and ASAP-seq (PMID 34083792) achieve trimodal profiling, but these datasets are small (<10 donors). Cohort-scale trimodal PBMC datasets that could enable regulatory network inference at cell-type resolution across hundreds of donors don't yet exist},
+  journal = {Elife},
+  year    = {2021},
+  doi     = {10.7554/elife.63632},
+  pmid    = {33835024},
+}
+
+@article{PMC2021,
+  author  = {(PubMed / Europe PMC)},
+  title   = {, 34062119 |},
+  journal = {Nat Commun},
+  year    = {2021},
+  doi     = {10.1038/s41467-021-23324-4},
+  pmid    = {34017005},
+}
+
+@article{PMC2020,
+  author  = {(PubMed / Europe PMC)},
+  title   = {, 35549406 |},
+  journal = {Cell},
+  year    = {2020},
+  doi     = {10.1016/j.cell.2020.01.022},
+  pmid    = {32059780},
+}
+
+@article{PMC2017,
+  author  = {(PubMed / Europe PMC)},
+  title   = {, 34062119 |},
+  journal = {Science},
+  year    = {2017},
+  doi     = {10.1126/science.aah4573},
+  pmid    = {28428369},
+}
+
+@article{PMC2021,
+  author  = {(PubMed / Europe PMC)},
+  title   = {, 34062119 |},
+  journal = {Nat Med},
+  year    = {2021},
+  doi     = {10.1038/s41591-021-01329-2},
+  pmid    = {33879890},
+}
+
+@article{PMC2019,
+  author  = {(PubMed / Europe PMC)},
+  title   = {, 34062119 |},
+  journal = {Cell},
+  year    = {2019},
+  doi     = {10.1016/j.cell.2019.05.031},
+  pmid    = {31178118},
+}

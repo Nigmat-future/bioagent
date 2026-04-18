@@ -1,0 +1,48 @@
+{
+  "scrna_pbmc": {
+    "research_topic": "Single-cell RNA-seq analysis of peripheral blood mononuclear cells",
+    "weighted_score": 1.1,
+    "literature": {
+      "papers_found": 5,
+      "gaps_identified": 10,
+      "score": 8.0,
+      "precision": 0.2,
+      "recall": 0.2
+    },
+    "hypothesis": {
+      "generated": 0,
+      "selected": false,
+      "score": 0.0
+    },
+    "analysis": {
+      "code_artifacts": 0,
+      "execution_success_rate": 0.0,
+      "figures_generated": 0,
+      "validation_passed": null,
+      "score": 1.0
+    },
+    "writing": {
+      "sections": [],
+      "word_count": 0,
+      "completeness": 0.0,
+      "score": 0.0
+    },
+    "figures": {
+      "count": 0,
+      "caption_coverage": 0.0,
+      "score": 0.0
+    },
+    "efficiency": {
+      "total_tokens": 630669,
+      "estimated_cost_usd": 2.156847,
+      "review_score": null,
+      "review_recommendation": "",
+      "score": 2.62
+    },
+    "benchmark": {
+      "case": "scrna_pbmc",
+      "precision": 0.2,
+      "recall": 0.2
+    }
+  }
+}

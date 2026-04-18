@@ -63,10 +63,10 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/nigmatrahim/bioagent"
-Repository = "https://github.com/nigmatrahim/bioagent"
-Documentation = "https://github.com/nigmatrahim/bioagent#readme"
-Issues = "https://github.com/nigmatrahim/bioagent/issues"
+Homepage = "https://github.com/Nigmat-future/bioagent"
+Repository = "https://github.com/Nigmat-future/bioagent"
+Documentation = "https://github.com/Nigmat-future/bioagent#readme"
+Issues = "https://github.com/Nigmat-future/bioagent/issues"
 
 [project.scripts]
 bioagent = "bioagent.cli.main:app"

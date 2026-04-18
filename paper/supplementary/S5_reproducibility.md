@@ -51,7 +51,7 @@ All datasets referenced in the BRAF case study are public and open-access. Exact
 
 Source code is released under the MIT licence at:
 
-- Repository: https://github.com/nigmatrahim/bioagent
+- Repository: https://github.com/Nigmat-future/bioagent
 - Release tag: `v0.2.0`
 - Archived: DOI pending submission to Zenodo at acceptance
 

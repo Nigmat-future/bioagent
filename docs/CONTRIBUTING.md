@@ -5,7 +5,7 @@ Thank you for considering a contribution. This document covers the practical set
 ## Development setup
 
 ```bash
-git clone https://github.com/nigmatrahim/bioagent.git
+git clone https://github.com/Nigmat-future/bioagent.git
 cd bioagent
 pip install -e ".[dev]"
 pre-commit install
@@ -61,7 +61,7 @@ Create `benchmarks/cases/<name>.py` with a `BenchmarkCase` dataclass instance, t
 
 ## Reporting bugs
 
-Open an issue at <https://github.com/nigmatrahim/bioagent/issues> with:
+Open an issue at <https://github.com/Nigmat-future/bioagent/issues> with:
 
 1. BioAgent version (`pip show bioagent`).
 2. Python version and OS.

@@ -1,0 +1,48 @@
+{
+  "research_topic": "BRAF V600E mutation in melanoma",
+  "weighted_score": 1.7,
+  "literature": {
+    "papers_found": 1,
+    "gaps_identified": 1,
+    "score": 4.0,
+    "precision": 0.0,
+    "recall": 0.0
+  },
+  "hypothesis": {
+    "generated": 3,
+    "selected": true,
+    "score": 5.0
+  },
+  "analysis": {
+    "code_artifacts": 0,
+    "execution_success_rate": 0.0,
+    "figures_generated": 0,
+    "validation_passed": null,
+    "score": 1.0
+  },
+  "writing": {
+    "sections": [],
+    "word_count": 0,
+    "completeness": 0.0,
+    "score": 0.0
+  },
+  "figures": {
+    "count": 0,
+    "caption_coverage": 0.0,
+    "score": 0.0
+  },
+  "efficiency": {
+    "total_tokens": 26462,
+    "estimated_cost_usd": 0.155034,
+    "review_score": null,
+    "review_recommendation": "",
+    "score": 3.5
+  },
+  "benchmark": {
+    "case": "braf_melanoma",
+    "precision": 0.0,
+    "recall": 0.0
+  },
+  "variant": "no_literature",
+  "wall_time_sec": 260.12
+}

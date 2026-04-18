@@ -11,16 +11,20 @@
 %% ── Packages ─────────────────────────────────────────────────────────────────
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage[hyphens]{url}
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{listings}
 \usepackage[super]{natbib}
 \usepackage{geometry}
 \geometry{margin=2.54cm}
+\setlength{\emergencystretch}{3em}
+\sloppy
 
 \hypersetup{
   colorlinks=true,
@@ -46,7 +50,9 @@
 \noindent
 \textsuperscript{1}School of Life Sciences, Peking University, Beijing 100871, China\\
 \textsuperscript{*}To whom correspondence should be addressed.
-E-mail: \texttt{nigmatrahim@stu.pku.edu.cn}
+E-mail: \texttt{nigmatrahim@stu.pku.edu.cn}\\
+GitHub: \url{https://github.com/Nigmat-future} \quad
+ResearchGate: \url{https://www.researchgate.net/profile/Nigmatrahim}
 
 %% ── Abstract ─────────────────────────────────────────────────────────────────
 \begin{abstract}
@@ -99,7 +105,7 @@ blackboard.
 
 \textbf{Availability:}
 BioAgent is open-source (MIT) at
-\url{https://github.com/nigmatrahim/bioagent}.
+\url{https://github.com/Nigmat-future/bioagent}.
 A Docker image, pinned dependency lock file, and one-command reproduction
 script (\texttt{scripts/reproduce\_benchmark.sh}) are provided.
 Requires Python~$\geq$3.11 and an Anthropic-compatible LLM endpoint.
@@ -603,7 +609,7 @@ submission-ready draft.
   Range-based resume, or checkpoint-based mid-run recovery.}
 \label{tab:comparison}
 \centering
-\small
+\footnotesize
 \begin{tabular}{lcccccc}
 \toprule
 \textbf{System} &
@@ -779,7 +785,7 @@ No controlled-access data were used.
 \section*{Code Availability}
 All source code, evaluation scripts, prompt templates and reproduction
 instructions are released under the MIT licence at
-\url{https://github.com/nigmatrahim/bioagent}.
+\url{https://github.com/Nigmat-future/bioagent}.
 A pinned dependency lock file
 (\texttt{requirements-lock.txt}), a Dockerfile, and a cross-platform
 reproduction script (\texttt{scripts/reproduce\_benchmark.sh},
