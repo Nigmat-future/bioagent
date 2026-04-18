@@ -155,11 +155,13 @@ The volume of biomedical literature doubles approximately every nine
 years~\cite{bornmann2015}, making comprehensive literature review an
 increasingly intractable manual task.
 At the same time, reproducibility in computational biology remains a
-challenge~\cite{Piccolo2016}: analyses are often underdocumented, tools
-version-pinned imprecisely, and random seeds omitted.
+challenge~\cite{Piccolo2016,Baker2016}: analyses are often
+underdocumented, tools version-pinned imprecisely, and random seeds
+omitted.
 
-Recent advances in LLMs have spurred development of AI-assisted research
-tools.
+Recent advances in large language models~\cite{OpenAI2023gpt4,anthropic2024}
+have spurred development of AI-assisted research tools, including
+biomedical-domain variants~\cite{Lee2023biomedlm}.
 However, existing solutions---including web-search augmented chatbots and
 single-prompt code generators---are stateless, lack citation grounding, and
 require continuous human oversight.
@@ -224,8 +226,8 @@ cycles) using LangGraph~\cite{langgraph2024}
 (\textbf{Figure~\ref{fig:architecture}}).
 Each node corresponds to a specialised \texttt{BaseAgent} subclass
 that receives the shared \texttt{ResearchState}, runs an Anthropic
-tool-use loop, and returns a partial state update applied via
-content-hash-deduplicated reducers.
+tool-use loop~\cite{anthropic_tooluse2024}, and returns a partial
+state update applied via content-hash-deduplicated reducers.
 
 \begin{figure}[htbp]
   \centering
@@ -242,8 +244,12 @@ content-hash-deduplicated reducers.
 \subsection{Agents}
 
 \paragraph{LiteratureAgent}
-Issues structured BioMCP~\cite{biomcp2024} queries (PubMed, ClinVar,
-GWAS Catalog, OncoKB) to retrieve relevant papers.
+Issues structured BioMCP~\cite{biomcp2024} queries---a
+Model-Context-Protocol~\cite{modelcontextprotocol2024} server
+aggregating PubMed, ClinVar~\cite{landrum2018clinvar},
+gnomAD~\cite{karczewski2020gnomad},
+GWAS Catalog, and OncoKB~\cite{chakravarty2017oncokb}---to retrieve
+relevant papers.
 Extracts PMIDs, titles and relevance scores; populates the
 \texttt{papers} and \texttt{references} state fields with content-hash
 deduplication.
@@ -268,11 +274,12 @@ shell commands for the user to complete the download manually.
 
 \paragraph{AnalystAgent}
 Executes Python code in an isolated subprocess with injected random
-seeds (\texttt{numpy.random}, \texttt{random}, seeded scanpy).
-Registers bioinformatics template tools (sequence analysis, differential
-expression via DESeq2~\cite{Love2014deseq2},
-single-cell via scanpy~\cite{Wolf2018scanpy}, GWAS simulation,
-survival analysis).
+seeds (\texttt{numpy}~\cite{Harris2020numpy},
+\texttt{scipy}~\cite{Virtanen2020scipy}, seeded scanpy).
+Registers bioinformatics template tools including sequence analysis
+via Biopython~\cite{Cock2009biopython}, differential expression via
+DESeq2~\cite{Love2014deseq2}, single-cell via
+scanpy~\cite{Wolf2018scanpy}, GWAS simulation, and survival analysis.
 Iterates up to \texttt{settings.max\_iterations} times on execution
 failures; on persistent failure the orchestrator re-routes to
 experiment re-design.
@@ -283,9 +290,10 @@ Methods, Results, Discussion) with numbered citations resolved from
 the \texttt{references} state field.
 
 \paragraph{VisualizationAgent}
-Generates publication-quality figures using matplotlib with
-Nature/Science themes (Okabe-Ito colour palette, 300~DPI,
-colour-blind safe) and saves them to the workspace.
+Generates publication-quality figures using
+matplotlib~\cite{Hunter2007matplotlib} with Nature/Science themes
+(Okabe-Ito colour palette, 300~DPI, colour-blind safe) and saves them
+to the workspace.
 
 \paragraph{ReviewAgent (OrchestratorAgent)}
 Scores the manuscript across five dimensions (0--10) and either
@@ -440,6 +448,12 @@ We ran BioAgent with the research question
 \emph{``Investigate the role of BRAF V600E mutation in melanoma drug resistance''}
 using Claude Sonnet~4.6 as the base model,
 \texttt{max\_iterations=5}, and \texttt{random\_seed=42}.
+BRAF V600E was chosen because it is the best-characterised activating
+mutation in melanoma~\cite{Davies2002,Flaherty2010} and has an
+extensively studied but still incompletely understood drug-resistance
+landscape~\cite{Sosman2012}, making it a stringent test of an
+autonomous agent's ability to retrieve, synthesise, and extend
+mechanistic knowledge.
 
 \subsection{Results}
 
