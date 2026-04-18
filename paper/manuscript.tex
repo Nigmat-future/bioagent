@@ -51,8 +51,7 @@
 \textsuperscript{1}School of Life Sciences, Peking University, Beijing 100871, China\\
 \textsuperscript{*}To whom correspondence should be addressed.
 E-mail: \texttt{nigmatrahim@stu.pku.edu.cn}\\
-GitHub: \url{https://github.com/Nigmat-future} \quad
-ResearchGate: \url{https://www.researchgate.net/profile/Nigmatrahim}
+ORCID: \href{https://orcid.org/0009-0009-9886-5224}{0009-0009-9886-5224}
 
 %% ── Abstract ─────────────────────────────────────────────────────────────────
 \begin{abstract}
@@ -266,6 +265,20 @@ maps names to both Anthropic-format JSON schemas (for the tool-use
 API) and Python callables.
 Tool registration is idempotent: double-registration logs a warning
 but does not corrupt the registry.
+\textbf{Figure~\ref{fig:tools}} summarises the tool inventory exposed
+to each agent, grouped by capability domain.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig2_agent_tools.png}
+  \caption{Tool inventory exposed by the \texttt{ToolRegistry}, grouped
+    by capability domain (literature, data acquisition, analysis,
+    writing, visualization, review).
+    Each agent subscribes to the subset relevant to its role; tools
+    are registered once and shared across agents through the singleton
+    registry.}
+  \label{fig:tools}
+\end{figure}
 
 \subsection{Export Pipeline}
 
@@ -465,6 +478,20 @@ failure; the downstream Writer and Visualization stages executed
 normally on the persisted \texttt{experiment\_plan}.}
 \end{table}
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig3_benchmark.png}
+  \caption{Per-dimension benchmark scores across the three post-fix
+    cases (BRAF V600E melanoma, TP53 pan-cancer, 10x~Genomics PBMC~3k)
+    on the six-dimension 0--10 rubric (literature, hypothesis,
+    analysis, writing, figures, efficiency).
+    Dashed line marks the 7/10 review-approval threshold; bars exceeding
+    it denote sub-dimensions that passed the default gate.
+    Values reproduce the rightmost block of
+    Table~\ref{tab:braf_run}.}
+  \label{fig:benchmark}
+\end{figure}
+
 \paragraph{Literature retrieval}
 BioAgent issued structured BioMCP queries across PubMed, ClinVar and
 OncoKB.
@@ -504,11 +531,10 @@ The WriterAgent produced a five-section IMRAD manuscript
 citations resolved from the \texttt{references} state field.
 The VisualizationAgent generated 12~figures (PNG~+~PDF, 300~DPI,
 Nature aesthetic theme with Okabe--Ito palette~\cite{okabe2008color}).
-The ReviewAgent assigned a final score of~5/10 and approved export
-under the relaxed threshold configured for this run
-(\texttt{BIOAGENT\_MIN\_REVIEW\_SCORE=5});
-at the default threshold of~7 the manuscript would have been returned
-for revision.
+The ReviewAgent assigned a final score of~7/10 with recommendation
+\emph{minor revision}, meeting the default approval threshold
+(\texttt{BIOAGENT\_MIN\_REVIEW\_SCORE=7}) and triggering the export
+pipeline without further revision rounds.
 
 \begin{figure}[htbp]
   \centering
@@ -550,11 +576,14 @@ human intervention within three attempts in all observed cases.
 
 \paragraph{F4. Cost-vs-quality frontier.}
 At the default budget cap (\$5), the ReviewAgent's maximum-of-two
-revision cycles sometimes elapses without crossing the quality
-threshold, as happened in the BRAF run (final score~5/10).
+revision cycles can elapse without crossing the quality threshold on
+cases with sparse gold-standard literature coverage.
 Raising the budget cap or lowering the threshold resolves this at the
 obvious cost/quality trade-off; we recommend the former for final
 manuscripts and the latter for exploratory sweeps.
+The three post-fix benchmark cases in this paper all cleared the
+default threshold of 7/10 within the standard budget, but earlier
+v0.1 pre-fix runs exhibited this failure mode on the TP53 case.
 
 %% ─────────────────────────────────────────────────────────────────────────────
 \section{Comparison with Existing Tools}
