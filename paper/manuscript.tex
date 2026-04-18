@@ -1,4 +1,4 @@
-%% BioAgent preprint --- NeurIPS/ICLR-style preprint format
+%% BioAgent preprint -- NeurIPS/ICLR-style preprint format
 %%
 %% Compile:
 %%   pdflatex manuscript.tex
@@ -101,8 +101,8 @@ downloads, corrupted archives, and geography-dependent latency).
 
 \textbf{Results:}
 We present \textbf{BioAgent}, an autonomous multi-agent system that
-orchestrates seven specialised agents---Orchestrator, Literature, Planner,
-DataAcquisition, Analyst, Writer, Visualization, and Review---in a directed
+orchestrates seven specialised agents (Orchestrator, Literature, Planner,
+DataAcquisition, Analyst, Writer, Visualization, and Review) in a directed
 LangGraph workflow to conduct end-to-end bioinformatics research.
 Given a natural-language research question, BioAgent autonomously retrieves
 and synthesises primary literature via BioMCP (PubMed, ClinVar, OncoKB),
@@ -114,8 +114,8 @@ publication-quality figures, and self-reviews the output against a
 six-dimension rubric.
 To our knowledge, BioAgent is the first autonomous biomedical research
 agent that closes the loop from \emph{live} multi-repository data
-acquisition --- with mirror-aware, retry/resume-hardened downloads and
-per-file \texttt{data\_source} provenance --- through analysis to a
+acquisition (with mirror-aware, retry/resume-hardened downloads and
+per-file \texttt{data\_source} provenance) through analysis to a
 self-reviewed IMRAD manuscript.
 Comparable recent systems (Biomni, CellAgent, GeneAgent, TxAgent)
 either operate on pre-curated or user-supplied data and stop at
@@ -162,8 +162,8 @@ omitted.
 Recent advances in large language models~\cite{OpenAI2023gpt4,anthropic2024}
 have spurred development of AI-assisted research tools, including
 biomedical-domain variants~\cite{Lee2023biomedlm}.
-However, existing solutions---including web-search augmented chatbots and
-single-prompt code generators---are stateless, lack citation grounding, and
+However, existing solutions, including web-search augmented chatbots and
+single-prompt code generators, are stateless, lack citation grounding, and
 require continuous human oversight.
 What is missing is a \emph{full-pipeline} system that maintains shared
 research state across agents, integrates authoritative biomedical databases,
@@ -244,11 +244,11 @@ state update applied via content-hash-deduplicated reducers.
 \subsection{Agents}
 
 \paragraph{LiteratureAgent}
-Issues structured BioMCP~\cite{biomcp2024} queries---a
+Issues structured BioMCP~\cite{biomcp2024} queries (a
 Model-Context-Protocol~\cite{modelcontextprotocol2024} server
 aggregating PubMed, ClinVar~\cite{landrum2018clinvar},
 gnomAD~\cite{karczewski2020gnomad},
-GWAS Catalog, and OncoKB~\cite{chakravarty2017oncokb}---to retrieve
+GWAS Catalog, and OncoKB~\cite{chakravarty2017oncokb}) to retrieve
 relevant papers.
 Extracts PMIDs, titles and relevance scores; populates the
 \texttt{papers} and \texttt{references} state fields with content-hash
@@ -328,10 +328,10 @@ Upon review approval, \texttt{review\_node} calls \texttt{\_auto\_export()},
 which invokes:
 
 \begin{itemize}
-  \item \texttt{export\_markdown()} --- assembles a self-contained
+  \item \texttt{export\_markdown()}: assembles a self-contained
         Markdown manuscript with embedded figure references and
         References section.
-  \item \texttt{export\_latex()} --- renders a Jinja2-templated
+  \item \texttt{export\_latex()}: renders a Jinja2-templated
         Bioinformatics~(OUP) \LaTeX{} document with
         \texttt{\_escape\_latex()} and \texttt{\_markdown\_to\_latex()}
         conversion; generates a \texttt{references.bib} via
@@ -416,9 +416,9 @@ implementation detail of the download layer.
 
 A separate v0.1 failure surfaced only at multi-case scale: on the
 BRAF run, after code execution completed the orchestrator's state
-summary showed \texttt{Hypotheses: 0}---because a later PlannerAgent
-re-entry had overwritten the field without re-populating
-it---triggering the prompt's
+summary showed \texttt{Hypotheses: 0} (because a later PlannerAgent
+re-entry had overwritten the field without re-populating it),
+triggering the prompt's
 ``gaps identified but no hypotheses $\rightarrow$
 \texttt{hypothesis\_generation}'' rule and re-dispatching the planner.
 The planner then produced another \texttt{experiment\_plan} without
@@ -794,8 +794,8 @@ sits well below the \$40--100 opportunity cost of an equivalent hour of
 expert researcher time, and its outputs are auditable at every step
 through the serialized \texttt{ResearchState} blackboard.
 
-The blackboard pattern---where all agents read from and write to a
-shared \texttt{ResearchState}---avoids duplicated tool calls, enables
+The blackboard pattern, where all agents read from and write to a
+shared \texttt{ResearchState}, avoids duplicated tool calls, enables
 mid-pipeline checkpointing through LangGraph's SQLite saver, and
 provides a full provenance trail suitable for post-hoc peer review.
 

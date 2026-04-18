@@ -1,4 +1,4 @@
-# Supplementary Material S1: BRAF V600E Melanoma Case Study — Full Output
+# Supplementary Material S1: BRAF V600E Melanoma Case Study: Full Output
 
 ## S1.1 Research Question
 
@@ -94,7 +94,7 @@ understudied.
 | Figure quality     | 8           |
 | **Overall**        | **7.8**     |
 
-**Decision:** APPROVED — manuscript exported.
+**Decision:** APPROVED: manuscript exported.
 
 ## S1.8 Resource Usage
 

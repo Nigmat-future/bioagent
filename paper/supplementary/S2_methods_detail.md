@@ -1,4 +1,4 @@
-# Supplementary Material S2 — Methods Detail
+# Supplementary Material S2: Methods Detail
 
 This document provides the implementation-level detail omitted from the main-text Methods section for space. All references are to `bioagent/` in the v0.2.0 release (tag `v0.2.0`).
 
@@ -98,19 +98,19 @@ $$
 \text{Composite} = 0.25 \cdot \text{lit} + 0.15 \cdot \text{hyp} + 0.25 \cdot \text{anal} + 0.15 \cdot \text{fig} + 0.15 \cdot \text{write} + 0.05 \cdot \text{eff}
 $$
 
-Weights and the closed-form formulas are in `bioagent/evaluation/metrics.py`. The rubric was chosen to reward grounded retrieval and executable analysis over pure text generation — this is intentionally biased toward the full pipeline and against baselines that cannot ground claims or run code.
+Weights and the closed-form formulas are in `bioagent/evaluation/metrics.py`. The rubric was chosen to reward grounded retrieval and executable analysis over pure text generation, this is intentionally biased toward the full pipeline and against baselines that cannot ground claims or run code.
 
 ## S2.6 Prompt Templates
 
 All prompt templates live in `bioagent/prompts/` as Markdown files:
 
-- `orchestrator.md` — phase-routing rubric (~2 KB)
-- `literature.md` — BioMCP query strategy and extraction format
-- `planner.md` — hypothesis generation with novelty/testability scoring rubric
-- `data_acquisition.md` — fallback hierarchy and output format contract
-- `analyst.md` — code-writing constraints (no synthetic data, use `workspace/data/` only)
-- `writer.md` — IMRAD structure and citation format
-- `visualization.md` — Nature-theme matplotlib code templates
-- `review.md` — 5-dimension scoring rubric
+- `orchestrator.md`: phase-routing rubric (~2 KB)
+- `literature.md`: BioMCP query strategy and extraction format
+- `planner.md`: hypothesis generation with novelty/testability scoring rubric
+- `data_acquisition.md`: fallback hierarchy and output format contract
+- `analyst.md`: code-writing constraints (no synthetic data, use `workspace/data/` only)
+- `writer.md`: IMRAD structure and citation format
+- `visualization.md`: Nature-theme matplotlib code templates
+- `review.md`: 5-dimension scoring rubric
 
 Each template is loaded lazily at agent-run time so that users can edit them without reinstalling the package.

@@ -1,4 +1,4 @@
-# Supplementary Material S5 — Reproducibility
+# Supplementary Material S5: Reproducibility
 
 ## S5.1 Environment
 
@@ -31,15 +31,15 @@ Both scripts:
 4. Run `python benchmarks/run_benchmark.py --case <case>`.
 5. Verify SHA-256 hashes of the produced output files against `benchmarks/expected_hashes.json` (when present).
 
-A `--dry-run` flag skips the LLM calls and confirms only that the graph compiles — useful in CI.
+A `--dry-run` flag skips the LLM calls and confirms only that the graph compiles, useful in CI.
 
 ## S5.3 Byte-level Hash Verification
 
 `scripts/verify_hashes.py` accepts a JSON manifest mapping relative file paths to SHA-256 digests. Files produced by LLM-stochastic steps (manuscript text, figure PNGs) are *not* included in the hash manifest because they vary run-to-run by design; the manifest covers:
 
-- `benchmarks/data/*.csv` — real downloaded data (stable if the upstream archive is unchanged)
-- `benchmarks/results/<case>/evaluation_report.json` — the deterministic subset of the report (gold-standard intersection, artefact counts, wall-time-normalised efficiency score rounded to two decimals)
-- `PROVENANCE.json` — the git SHA and model name (fixed by seed)
+- `benchmarks/data/*.csv`: real downloaded data (stable if the upstream archive is unchanged)
+- `benchmarks/results/<case>/evaluation_report.json`: the deterministic subset of the report (gold-standard intersection, artefact counts, wall-time-normalised efficiency score rounded to two decimals)
+- `PROVENANCE.json`: the git SHA and model name (fixed by seed)
 
 An equality check on the LLM-generated prose would fail on every run, so we deliberately exclude it.
 
@@ -59,9 +59,9 @@ Source code is released under the MIT licence at:
 
 The following outputs are intentionally stochastic and are *not* expected to reproduce byte-for-byte:
 
-1. **Manuscript prose** (`paper_sections`) — Claude sampling introduces variance even at `temperature=0` through tokenisation and tool-use ordering.
-2. **Figure image bytes** — matplotlib renders differ slightly across library versions even when data is identical.
-3. **Wall-clock times** — network latency to BioMCP and API provider varies.
+1. **Manuscript prose** (`paper_sections`), Claude sampling introduces variance even at `temperature=0` through tokenisation and tool-use ordering.
+2. **Figure image bytes**, matplotlib renders differ slightly across library versions even when data is identical.
+3. **Wall-clock times**, network latency to BioMCP and API provider varies.
 
 Deterministic surfaces that *are* expected to reproduce across identical environments:
 

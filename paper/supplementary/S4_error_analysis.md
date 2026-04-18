@@ -1,4 +1,4 @@
-# Supplementary Material S4 — Error Analysis
+# Supplementary Material S4: Error Analysis
 
 This supplement extends the error analysis subsection of the main text with concrete log excerpts, incidence rates, and mitigations.
 
@@ -23,7 +23,7 @@ This supplement extends the error analysis subsection of the main text with conc
 **Log excerpt.**
 
 ```
-WARNING: [writer] section extractor failed for 'references' — falling back to regex
+WARNING: [writer] section extractor failed for 'references', falling back to regex
 INFO: [writer] recovered references section via \d{8} pattern match
 ```
 
@@ -75,7 +75,7 @@ We recommend the first or second option for final manuscripts and the third only
 
 **Symptom.** When the ReviewAgent is ablated (see S3), the orchestrator cycles through phases without a terminal exit path. Tool-use messages accumulate in the conversation history until the Anthropic endpoint returns `invalid_request_error: context window exceeds limit`.
 
-**Observed in.** The `no_review` ablation run for BRAF melanoma (S3.2.2) — crashed at wall-time 4,296 s during the AnalystAgent's second code-execution cycle, after 30 tool calls had accumulated in the message history.
+**Observed in.** The `no_review` ablation run for BRAF melanoma (S3.2.2), crashed at wall-time 4,296 s during the AnalystAgent's second code-execution cycle, after 30 tool calls had accumulated in the message history.
 
 **Incidence.** 0% of non-ablated runs; 100% of `no_review` runs beyond 60 minutes on current models.
 
@@ -92,13 +92,13 @@ We recommend the first or second option for final manuscripts and the third only
 | ID | Severity | Automatically recoverable | User intervention required |
 |---|---|---|---|
 | F1 | Moderate | No | Rephrase query |
-| F2 | Low | Yes (fallback parser) | — |
-| F3 | Low | Yes (retry) | — |
+| F2 | Low | Yes (fallback parser) | -- |
+| F3 | Low | Yes (retry) | -- |
 | F4 | Moderate | No | Raise budget or lower threshold |
 | F5 | Low | Partially | Manual caption review |
-| F6 | Low | Yes (selection heuristic) | — |
+| F6 | Low | Yes (selection heuristic) | -- |
 | F7 | High (in ablated config only) | No | Re-enable ReviewAgent, or wait for message-compaction feature |
-| F8 | None (resolved) | Yes | — |
+| F8 | None (resolved) | Yes | -- |
 
 ## S4.3 What Is *Not* Automatically Recoverable
 
