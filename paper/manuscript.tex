@@ -1,4 +1,4 @@
-%% BioAgent manuscript — Bioinformatics (Oxford) format
+%% BioAgent manuscript --- Bioinformatics (Oxford) format
 %% Original Paper / Application Note
 %%
 %% Compile:
@@ -62,8 +62,8 @@ downloads, corrupted archives, and geography-dependent latency).
 
 \textbf{Results:}
 We present \textbf{BioAgent}, an autonomous multi-agent system that
-orchestrates seven specialised agents—Orchestrator, Literature, Planner,
-DataAcquisition, Analyst, Writer, Visualization, and Review—in a directed
+orchestrates seven specialised agents---Orchestrator, Literature, Planner,
+DataAcquisition, Analyst, Writer, Visualization, and Review---in a directed
 LangGraph workflow to conduct end-to-end bioinformatics research.
 Given a natural-language research question, BioAgent autonomously retrieves
 and synthesises primary literature via BioMCP (PubMed, ClinVar, OncoKB),
@@ -75,8 +75,8 @@ publication-quality figures, and self-reviews the output against a
 six-dimension rubric.
 To our knowledge, BioAgent is the first autonomous biomedical research
 agent that closes the loop from \emph{live} multi-repository data
-acquisition — with mirror-aware, retry/resume-hardened downloads and
-per-file \texttt{data\_source} provenance — through analysis to a
+acquisition --- with mirror-aware, retry/resume-hardened downloads and
+per-file \texttt{data\_source} provenance --- through analysis to a
 self-reviewed IMRAD manuscript.
 Comparable recent systems (Biomni, CellAgent, GeneAgent, TxAgent)
 either operate on pre-curated or user-supplied data and stop at
@@ -121,8 +121,8 @@ version-pinned imprecisely, and random seeds omitted.
 
 Recent advances in LLMs have spurred development of AI-assisted research
 tools.
-However, existing solutions—including web-search augmented chatbots and
-single-prompt code generators—are stateless, lack citation grounding, and
+However, existing solutions---including web-search augmented chatbots and
+single-prompt code generators---are stateless, lack citation grounding, and
 require continuous human oversight.
 What is missing is a \emph{full-pipeline} system that maintains shared
 research state across agents, integrates authoritative biomedical databases,
@@ -267,10 +267,10 @@ Upon review approval, \texttt{review\_node} calls \texttt{\_auto\_export()},
 which invokes:
 
 \begin{itemize}
-  \item \texttt{export\_markdown()} — assembles a self-contained
+  \item \texttt{export\_markdown()} --- assembles a self-contained
         Markdown manuscript with embedded figure references and
         References section.
-  \item \texttt{export\_latex()} — renders a Jinja2-templated
+  \item \texttt{export\_latex()} --- renders a Jinja2-templated
         Bioinformatics~(OUP) \LaTeX{} document with
         \texttt{\_escape\_latex()} and \texttt{\_markdown\_to\_latex()}
         conversion; generates a \texttt{references.bib} via
@@ -787,7 +787,7 @@ reproduction script (\texttt{scripts/reproduce\_benchmark.sh},
 outputs.
 
 %% ─────────────────────────────────────────────────────────────────────────────
-\bibliographystyle{natbib}
+\bibliographystyle{unsrtnat}
 \bibliography{references}
 
 \end{document}
