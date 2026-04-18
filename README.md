@@ -7,6 +7,7 @@
 [![Tests](https://img.shields.io/badge/tests-143%20passing-brightgreen.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-48%25-yellow.svg)](pyproject.toml)
 
+Author: Nigmat Rahim    Email: nigmatrahim4@gmail.com/nigmatrahim@stu.pku.edu.cn
 BioAgent is an autonomous research system that conducts **end-to-end bioinformatics research** — from literature review and hypothesis generation through computational analysis, scientific writing, and self-review — without human intervention between steps.
 
 ## Architecture
